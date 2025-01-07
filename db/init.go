@@ -3,20 +3,45 @@ package db
 import (
 	"database/sql"
 	"log"
-	"os"
+	_ "modernc.org/sqlite" // Modern SQLite driver
 )
+
 const dbPath = "sqlite-database.db"
 
-func InitDB() {
+var DB *sql.DB
 
-	os.Remove(dbPath)
-	file, err := os.Create(dbPath)
-	file.Close()
+func InitDB() {
+	var err error
+	// Veritabanı bağlantısını aç
+	DB, err = sql.Open("sqlite", dbPath) // Modern SQLite driver'ı kullan
 	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
+
+	if err =DB.Ping(); err !=nil {
 		log.Fatal(err.Error())
 	}
-	db, err := sql.Open("sqlite3", "./sqlite-database.db")
+
+	// Bağlantı havuz ayarları
+	DB.SetMaxOpenConns(10)
+	DB.SetMaxIdleConns(5)
+
+	// Tabloları oluştur
+	createTables()
+}
+
+func createTables() {
+	createTableString := `CREATE TABLE IF NOT EXISTS request_logs (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		method TEXT NOT NULL,
+		endpoint TEXT NOT NULL,
+		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+	);`
+
+	_, err := DB.Exec(createTableString)
 	if err != nil {
-		log.Fatal(err.Error()5553wz)
+		log.Fatalf("Failed to create table: %v", err)
 	}
+
+	log.Println("Tables created successfully")
 }
