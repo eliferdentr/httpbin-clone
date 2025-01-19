@@ -2,8 +2,8 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"strings"
+	"time"
 )
 
 type RequestProcessorServiceImpl struct{}
@@ -43,10 +43,40 @@ func (r *RequestProcessorServiceImpl) GetBody(body interface{}) (interface{}, er
 	return parsedBody, nil
 
 }
-func (r *RequestProcessorServiceImpl) GetQueryParams(params map[string][]string) map[string][]string {
-	//return the query params in a certain format
+func (r *RequestProcessorServiceImpl) GetQueryParams(params map[string][]string) map[string]interface{}{
+	//return the query params in json format
+	formattedParams := make(map[string]interface{})
+	for key, values := range params {
+		if len(values) == 1 {
+			formattedParams[key] = values[0]
+		} else if len(values) > 1 {
+			formattedParams[key] = values
+		} else {
+			formattedParams[key] = nil
+		}
+	}
+
+	return formattedParams
 }
 func (r *RequestProcessorServiceImpl) GetRequestDetails(method string, headers map[string][]string, params map[string][]string, body interface{}) map[string]interface{} {
-	// return details of the request
+	queryParams := r.GetQueryParams(params)
+	filteredHeaders := r.GetHeader(headers)
+	processedBody, _ := r.GetBody(body)
+
+	totalQueryParams := len(queryParams)
+	totalHeaders := len(headers)
+
+	return map[string] interface {} {
+		"method" : method,
+		"valid_headers" : filteredHeaders,
+		"total_valid_headers" : totalHeaders,
+		"valid_query_params" : queryParams,
+		"total_valid_query_keys" : totalQueryParams,
+		"body" : processedBody,
+		"meta" : map [string] interface{} {
+			"processed_at" : time.Now(),
+		},
+	}
+
 
 }

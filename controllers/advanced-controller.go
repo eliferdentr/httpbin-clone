@@ -1,17 +1,55 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	services "httbinclone-eliferden.com/services/implementation"
+)
 
 func GetAnything(context *gin.Context) {
 	//return details of the request
 	headers := context.Request.Header
 	method := context.Request.Method
-	url := context.Request.URL.String()
-	params :=
+	params := context.Request.URL.Query()
+
+	var body map[string]any
+	if err := context.ShouldBindJSON(&body); err != nil {
+		body = nil
+	}
+
+	service := services.NewRequestProcessorServiceImpl()
+	details := service.GetRequestDetails(method, headers, params, body)
+
+	context.JSON(http.StatusOK, details)
 
 
 }
 
 func GetDelay (context *gin.Context) {
-	
+	secondsStr := context.Param("seconds")
+	if secondsStr == "" {
+		context.JSON(http.StatusBadRequest, gin.H {
+			"error" : "Missing 'seconds' parameter. Please provide a 'seconds' parameter",
+		})
+		return
+	}
+
+	seconds, err := strconv.Atoi(secondsStr)
+	if err != nil || seconds < 0 {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error" : "MissingInvalid 'seconds' parameter. Please provide a positive integer.",
+		})
+		return
+	}
+
+	time.Sleep(time.Duration(seconds) * time.Second)
+
+	context.JSON(http.StatusOK, gin.H{
+		"message" : fmt.Sprintf("Response delayed by %d seconds", seconds),
+		"delay_seconds" : seconds,
+	})
 }
