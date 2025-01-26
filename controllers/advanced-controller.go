@@ -10,8 +10,9 @@ import (
 	services "httbinclone-eliferden.com/services/implementation"
 )
 
+//return details of the request
 func GetAnything(context *gin.Context) {
-	//return details of the request
+	
 	headers := context.Request.Header
 	method := context.Request.Method
 	params := context.Request.URL.Query()

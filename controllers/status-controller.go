@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//Returns the specified HTTP status code.
 func GetStatus(context *gin.Context) {
 	statusCode := context.Param("code")
 	if statusCode == "" {

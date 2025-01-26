@@ -5,15 +5,20 @@ import "github.com/gin-gonic/gin"
 func RegisterRoutes(router *gin.Engine) {
 	//advanced
 	RegisterAdvancedRoutes(router)
-	
-	//headers
-	RegisterHeadersRoutes(router)
-
 	//basics
 	RegisterBasicRoutes(router)
-
+	//http methods
+	RegisterHTTPRoutes(router)
+	//redirect
+	RegisterRedirectRoutes(router)
 	//status
-	RegisterStatus(router)
+	RegisterStatusRoutes(router)
+	//cookies
+	RegisterCookiesRoutes(router)
+
+	
+
+
 
 	//upload
 	RegisterUploadRoutes(router)
