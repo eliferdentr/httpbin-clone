@@ -3,11 +3,14 @@ package controllers
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"go/constant"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	utils "httbinclone-eliferden.com/utils"
+	constants "httbinclone-eliferden.com/utils/constants"
 )
 
 //verifies basic authentication and returns 200 if successful
@@ -64,12 +67,23 @@ func VerifyHiddenBasicAuth(context *gin.Context) {
 
 //makes HTTP Digest Authentication
 func VerifyDigestAuth(context *gin.Context) {
-	// nonceService, err  := utils.GenerateNonce()
-	// if err != nil {
-	// 	context.JSON(http.StatusInternalServerError, gin.H{
-	// 		"error" : "There was an error while generating digest auth",
-	// 	})
-	// }
+
+	header := context.Request.Header.Get("Authorization")
+	if header == "" {
+		//create nonce
+	nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error" : "An error occured while generating the nonce"})
+	}
+
+	digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%d", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
+	context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
+	context.Header("WWW-Authenticate", digestString)
+	return
+	}
+
+		// 3. Authorization header'ını parçala ve bilgileri al (username, nonce, response, vb.)
+		authInfo := parseDigestAuthHeader(header)
 
 
 
@@ -80,7 +94,7 @@ func getAuthorizationHeader (context *gin.Context) (string, error) {
 	header := context.Request.Header.Get("Authorization")
 
 	if  header == "" {
-		return "", errors.New ("Authorization header is empty. Please enter valid credentials.")
+		return "", errors.New ("authorization header is empty. Please enter valid credentials")
 	}
 	return header, nil
 }
@@ -88,12 +102,12 @@ func getAuthorizationHeader (context *gin.Context) (string, error) {
 func getAuthorizationParts (header string) error {
 	authParts := strings.SplitN(header," ", 2)
 	if len(authParts) != 2 || authParts[0] != "Basic" {
-		return errors.New("Invalid Authorization header format. Expected 'Basic'.")
+		return errors.New("invalid Authorization header format. Expected 'Basic'")
 	}
 	payload, _ := base64.StdEncoding.DecodeString(authParts[1])
 	pair := strings.SplitN(string(payload), ":", 2)
 	if len(pair) != 2 || pair[0] != "username" || pair[1] != "password" {
-		return errors.New ("Invalid username or password.")
+		return errors.New ("Invalid username or password")
 	}
 	return nil
 }
@@ -112,4 +126,6 @@ func isValidBasicAuth(header string) bool {
 
 	return true
 }
+
+func parseDigestAuthHeader()
 

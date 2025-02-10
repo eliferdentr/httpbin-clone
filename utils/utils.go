@@ -2,16 +2,21 @@ package utils
 
 import (
 	"crypto/rand"
-	"encoding/base64"
-	"fmt"
+	"crypto/sha256"
+	"encoding/hex"
 )
 
-func GenerateNonce() (string, error) {
-	nonceBytes := make([]byte, 32)
+func GenerateNonce(size int) (string, error) {
+	// Generate random byte
+	nonceBytes := make([]byte, size)
 	_, err := rand.Read(nonceBytes)
 	if err != nil {
-		return "", fmt.Errorf("could not generate nonce")
+		return "", err
 	}
 
-	return base64.URLEncoding.EncodeToString(nonceBytes), nil
+	// SHA-256
+	hash := sha256.Sum256(nonceBytes)
+
+	// return string in Hex format
+	return hex.EncodeToString(hash[:]), nil
 }
