@@ -68,7 +68,10 @@ func VerifyHiddenBasicAuth(context *gin.Context) {
 //makes HTTP Digest Authentication
 func VerifyDigestAuth(context *gin.Context) {
 
-	header := context.Request.Header.Get("Authorization")
+	header,err := getAuthorizationHeader(context)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error" : err})
+	}
 	if header == "" {
 		//create nonce
 	nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
@@ -127,5 +130,26 @@ func isValidBasicAuth(header string) bool {
 	return true
 }
 
-func parseDigestAuthHeader()
+func parseDigestAuthHeader(header string) map[string]string{
+  //remove digest prefix
+  if !strings.HasPrefix(header, "Digest ") {
+	return nil
+  }
+
+  header = strings.TrimPrefix(header, "Digest ")
+
+  authMap := make(map[string]string)
+
+  pairs := utils.SplitByCommas(header)
+
+  for _, pair := range pairs {
+	key, value := utils.ExtractKeyValue (pair)
+	authMap[key] = value
+  }
+
+  return authMap 
+
+
+	
+}
 

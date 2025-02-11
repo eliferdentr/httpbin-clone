@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"strings"
 )
 
 func GenerateNonce(size int) (string, error) {
@@ -19,4 +20,32 @@ func GenerateNonce(size int) (string, error) {
 
 	// return string in Hex format
 	return hex.EncodeToString(hash[:]), nil
+}
+
+func ExtractKeyValue (pair string) (string, string) {
+
+}
+
+func SplitByCommas (header string) []string {
+	var result []string
+	var current string
+	inQuotes := false
+
+	for _,char := range header {
+		switch char {
+		case '"':
+			inQuotes = !inQuotes
+		case ',':
+			if !inQuotes {
+				result = append(result, strings.TrimSpace(current))
+				current = ""
+				continue
+			}
+		}
+		current += string(char)
+	}
+	if current != "" {
+		result = append(result, strings.TrimSpace(current))
+	}
+	return result
 }
