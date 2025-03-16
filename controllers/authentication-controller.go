@@ -1,10 +1,11 @@
 package controllers
 
 import (
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"go/constant"
 	"net/http"
 	"strings"
 
@@ -67,31 +68,46 @@ func VerifyHiddenBasicAuth(context *gin.Context) {
 
 //makes HTTP Digest Authentication
 func VerifyDigestAuth(context *gin.Context) {
-
-	header,err := getAuthorizationHeader(context)
+	header, err := getAuthorizationHeader(context)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error" : err})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	if header == "" {
-		//create nonce
 	nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error" : "An error occured while generating the nonce"})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while generating the nonce"})
+		return
+	}
+	// Eğer Authorization header yoksa, nonce oluştur ve istemciye gönder
+	if header == "" {
+		digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%s", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
+		context.Header("WWW-Authenticate", digestString)
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
+		return
 	}
 
-	digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%d", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
-	context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
-	context.Header("WWW-Authenticate", digestString)
-	return
+	// Authorization header'ını parçala ve bilgileri al
+	authInfo := parseDigestAuthHeader(header)
+	if authInfo == nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format."})
+		return
 	}
 
-		// 3. Authorization header'ını parçala ve bilgileri al (username, nonce, response, vb.)
-		authInfo := parseDigestAuthHeader(header)
+	// Nonce kontrolü
+	if authInfo["nonce"] == "" || authInfo["nonce"] != nonce {
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid nonce value."})
+		return
+	}
 
+	// Kullanıcı adı ve şifre doğrulama
+	if authInfo["username"] != constants.EXPECTED_USERNAME || authInfo["response"] != calculateDigestHash(authInfo) {
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password."})
+		return
+	}
 
-
-
+	context.JSON(http.StatusOK, gin.H{"message": "Digest authentication successful."})
 }
+
 
 func getAuthorizationHeader (context *gin.Context) (string, error) {
 	header := context.Request.Header.Get("Authorization")
@@ -130,26 +146,33 @@ func isValidBasicAuth(header string) bool {
 	return true
 }
 
-func parseDigestAuthHeader(header string) map[string]string{
-  //remove digest prefix
-  if !strings.HasPrefix(header, "Digest ") {
-	return nil
-  }
+func parseDigestAuthHeader(header string) map[string]string {
+	if !strings.HasPrefix(header, "Digest ") {
+		return nil
+	}
+	header = strings.TrimPrefix(header, "Digest ")
 
-  header = strings.TrimPrefix(header, "Digest ")
+	authMap := make(map[string]string)
+	pairs := utils.SplitByCommas(header)
 
-  authMap := make(map[string]string)
+	for _, pair := range pairs {
+		key, value := utils.ExtractKeyValue(pair)
+		authMap[key] = value
+	}
 
-  pairs := utils.SplitByCommas(header)
-
-  for _, pair := range pairs {
-	key, value := utils.ExtractKeyValue (pair)
-	authMap[key] = value
-  }
-
-  return authMap 
+	return authMap
+}
 
 
-	
+func calculateDigestHash(authInfo map[string]string) string {
+	ha1 := md5Hash(authInfo["username"] + ":" + constants.REALM + ":" + constants.EXPECTED_PASSWORD)
+	ha2 := md5Hash(authInfo["method"] + ":" + authInfo["uri"])
+	return md5Hash(ha1 + ":" + authInfo["nonce"] + ":" + ha2)
+}
+
+func md5Hash(data string) string {
+	h := md5.New()
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
