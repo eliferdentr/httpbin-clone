@@ -73,13 +73,15 @@ func VerifyDigestAuth(context *gin.Context) {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while generating the nonce"})
-		return
-	}
+
 	// Eğer Authorization header yoksa, nonce oluştur ve istemciye gönder
 	if header == "" {
+		nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
+		if err != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while generating the nonce"})
+			return
+		}
+
 		digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%s", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
 		context.Header("WWW-Authenticate", digestString)
 		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
@@ -94,7 +96,7 @@ func VerifyDigestAuth(context *gin.Context) {
 	}
 
 	// Nonce kontrolü
-	if authInfo["nonce"] == "" || authInfo["nonce"] != nonce {
+	if authInfo["nonce"] == "" || authInfo["nonce"] != constants.EXPECTED_NONCE {
 		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid nonce value."})
 		return
 	}
@@ -109,6 +111,7 @@ func VerifyDigestAuth(context *gin.Context) {
 }
 
 
+
 func getAuthorizationHeader (context *gin.Context) (string, error) {
 	header := context.Request.Header.Get("Authorization")
 
@@ -118,18 +121,6 @@ func getAuthorizationHeader (context *gin.Context) (string, error) {
 	return header, nil
 }
 
-func getAuthorizationParts (header string) error {
-	authParts := strings.SplitN(header," ", 2)
-	if len(authParts) != 2 || authParts[0] != "Basic" {
-		return errors.New("invalid Authorization header format. Expected 'Basic'")
-	}
-	payload, _ := base64.StdEncoding.DecodeString(authParts[1])
-	pair := strings.SplitN(string(payload), ":", 2)
-	if len(pair) != 2 || pair[0] != "username" || pair[1] != "password" {
-		return errors.New ("Invalid username or password")
-	}
-	return nil
-}
 
 func isValidBasicAuth(header string) bool {
 	authParts := strings.SplitN(header, " ", 2)

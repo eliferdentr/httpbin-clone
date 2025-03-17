@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-    constants "httbinclone-eliferden.com/utils/constants"
+
 	"github.com/gin-gonic/gin"
+	"httbinclone-eliferden.com/utils"
+	constants "httbinclone-eliferden.com/utils/constants"
 )
 
 //redirects for n times to the same endpoint
@@ -47,7 +49,7 @@ func AbsoluteRedirectHandler(context *gin.Context) {
 
 //redirects with relative path for n times
 func RelativeRedirectHandler(context *gin.Context) {
-	n, err := getPositiveIntParam(context, "n")
+	n, err := utils.GetPositiveIntParam(context, "n")
 	if err != nil {
 		return // Hata varsa yanıt döndürüldü, devam etmiyoruz
 	}
@@ -62,16 +64,4 @@ func RelativeRedirectHandler(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{
 		"message": "Final destination reached after relative redirects.",
 	})
-}
-
-func getPositiveIntParam(context *gin.Context, paramName string) (int, error) {
-	paramStr := context.Param(paramName) // Parametreyi al
-	param, err := strconv.Atoi(paramStr) // String to int dönüşümü
-	if err != nil || param <= 0 {        // Geçersizlik kontrolü
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid parameter. Please provide a positive integer.",
-		})
-		return 0, err
-	}
-	return param, nil
 }
