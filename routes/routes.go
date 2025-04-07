@@ -16,9 +16,8 @@ func RegisterRoutes(router *gin.Engine) {
 	//authentication
 	RegisterAuthenticationRoutes(router)
 	//streaming-delay
-	
-
-	//misc
+	RegisterStreamingDelayRoutes(router)
+	//other
 
 
 }

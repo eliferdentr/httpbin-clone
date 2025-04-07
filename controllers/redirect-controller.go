@@ -3,8 +3,6 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"httbinclone-eliferden.com/utils"
 	constants "httbinclone-eliferden.com/utils/constants"
@@ -12,7 +10,7 @@ import (
 
 //redirects for n times to the same endpoint
 func RedirectHandler(context *gin.Context) {
-    n, err := getPositiveIntParam(context, "n")
+    n, err := utils.GetPositiveIntParam(context, "n")
 	if err != nil {
 		return // Hata varsa yanıt döndürüldü, devam etmiyoruz
 	}
@@ -23,7 +21,7 @@ func RedirectHandler(context *gin.Context) {
         context.Redirect(http.StatusFound, redirectUrl)
         return
     }
-    context.JSON(http.StatusBadRequest, gin.H{
+    context.JSON(http.StatusOK, gin.H{
         "message" : "Final destination reached after redirects.",
     })
 
@@ -31,7 +29,7 @@ func RedirectHandler(context *gin.Context) {
 
 //redirects with absolute path for n times
 func AbsoluteRedirectHandler(context *gin.Context) {
-    n, err := getPositiveIntParam(context, "n")
+    n, err := utils.GetPositiveIntParam(context, "n")
 	if err != nil {
 		return // Hata varsa yanıt döndürüldü, devam etmiyoruz
 	}
