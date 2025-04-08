@@ -1,5 +1,5 @@
 package assets
-import "embed"
+import _ "embed"
 
 //go:embed uia.jpg
 var SampleImage []byte

@@ -222,9 +222,6 @@ func GetBrotli (context *gin.Context) {
 	}
 }
 
-func GetWebSocket(context *gin.Context) {
-	
-}
 
 func GetAnything(context *gin.Context) {
 

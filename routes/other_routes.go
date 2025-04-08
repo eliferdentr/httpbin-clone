@@ -17,7 +17,5 @@ func RegisterOtherRoutes(router *gin.Engine) {
 	router.GET("/deflate", controller.GetDeflate)
 	router.GET("/brotli", controller.GetBrotli)
 	router.GET("/anything", controller.GetAnything)
-	router.GET("/range/:n", controller.GetRange)
-	router.GET("/websocket", controller.GetWebSocket)
 
 }
