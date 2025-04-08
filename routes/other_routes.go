@@ -11,7 +11,7 @@ func RegisterOtherRoutes(router *gin.Engine) {
 	router.GET("/robots.txt", controller.GetRobots)
 	router.GET("/deny", controller.GetDeny)
 	router.GET("/image", controller.GetImage)
-	router.POST("/forms/post", controller.PostForms)
+	router.GET("/forms/post", controller.PostForms)
 	router.GET("/stream-bytes/:n", controller.GetStreamBytes)
 	router.GET("/gzip", controller.GetGZip)
 	router.GET("/deflate", controller.GetDeflate)

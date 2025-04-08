@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"fm"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -76,7 +76,7 @@ func GetPositiveIntParam(context *gin.Context, paramName string) (int, error) {
 	paramStr := context.Param(paramName) // Parametreyi al
 	param, err := strconv.Atoi(paramStr) // String to int dönüşümü
 	if err != nil || param <= 0 {
-		return 0, fmt.Errorf("Invalid parameter. Please provide a positive integer.")
+		return 0, fmt.Errorf("invalid parameter please provide a positive integer")
 	}
 	return param, nil
 }
