@@ -1,13 +1,13 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"httbinclone-eliferden.com/utils"
+)
 
 func GetHandler(context *gin.Context) {
 	//get all the params of the query
-	queryParams := context.Request.URL.Query()
-	context.JSON(200, gin.H{
-		"query": queryParams,
-	})
+	context.JSON(200, utils.BuildResponse(context, nil))
 
 }
 
@@ -21,9 +21,7 @@ func PostHandler(context *gin.Context) {
 		return
 	}
 
-	context.JSON(200, gin.H{
-		"body": requestBody,
-	})
+	context.JSON(200, utils.BuildResponse(context, requestBody))
 }
 
 func PutHandler(context *gin.Context) {
@@ -39,16 +37,13 @@ func PutHandler(context *gin.Context) {
 
 	requestBody["updated"] = true
 
-	context.JSON(200, gin.H{
-		"updated_body": requestBody,
-	})
+	context.JSON(200, utils.BuildResponse(context, requestBody))
 
 }
 
 func DeleteHandler(context *gin.Context) {
-	context.JSON(200, gin.H{
-		"message": "Delete request is successful",
-	})
+	context.JSON(200, utils.BuildResponse(context, nil))
+
 }
 
 func PatchHandler(context *gin.Context) {
@@ -62,7 +57,6 @@ func PatchHandler(context *gin.Context) {
 		return
 	}
 
-	context.JSON(200, gin.H{
-		"body": requestBody,
-	})
+	context.JSON(200, utils.BuildResponse(context, requestBody))
+
 }

@@ -8,6 +8,7 @@ const (
 	EXPECTED_USERNAME       = "expected_username"
 	EXPECTED_PASSWORD       = "expected_password"
 	REALM                   = "Access to the site"
+	EXPECTED_BEARER_TOKEN 	= "my-super-secret-token-123"
 	EXPECTED_NONCE          = "1234567890abcdef"  // Demo amaçlı sabit nonce
 	HTMLCONTENT				= `
 								<!DOCTYPE html>

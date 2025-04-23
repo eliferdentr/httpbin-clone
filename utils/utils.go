@@ -80,3 +80,36 @@ func GetPositiveIntParam(context *gin.Context, paramName string) (int, error) {
 	}
 	return param, nil
 }
+
+func BuildResponse ( context *gin.Context, requestBody any) gin.H {
+	args := context.Request.URL.Query()
+	headers := make(map[string]string)
+
+	for k, v := range context.Request.Header {
+		headers [k] = strings.Join(v, ", ")
+	}
+
+	origin := context.ClientIP()
+
+	scheme := "http"
+
+	if context.Request.TLS != nil {
+		scheme = "https"
+	}
+
+	url := fmt.Sprintf(
+		"%s://%s%s", scheme, context.Request.Host, context.Request.RequestURI)
+
+	response := gin.H{
+		"args" : args,
+		"headers": headers,
+		"origin": origin,
+		"url": url,
+	}
+
+	if requestBody != nil {
+		response ["data"] = requestBody
+	}
+
+	return response
+}
