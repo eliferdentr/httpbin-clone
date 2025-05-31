@@ -15,6 +15,24 @@ import (
 )
 
 //verifies basic authentication and returns 200 if successful
+//Prompts the user for authorization using HTTP Basic Auth.
+//basic auth: Basic Authentication relies on the username and password being
+//combined, encoded with Base64, and included on the server in the
+// Authorization HTTP header.
+// 1- A client makes a request to a protected server.
+//2- The server sends a 401 Unauthorized response and
+// a WWW-Authenticate: Basic realm="Realm Name" header to
+// indicate that the resource requires authentication.
+// The "realm"(yetki alanı) is typically a description of the protected realm
+// and appears in the login window that browsers display to the user.
+//3-The client asks the user for a username and password (or retrieves them from where it is stored)
+//4-It combines the username and password in the format username:password.
+//5-It encodes this combined string in Base64.
+//6-It sends a new request to the same resource by appending the encoded string to an HTTP header in the format Authorization: Basic <encoded_string>.
+//7-The server receives the Authorization header, decodes it in Base64, extracts the username and password, and compares it to records in its own system.
+//8-If it matches, it returns the requested resource with a 200 OK.
+//9-If it doesn't match, it sends back a 401 Unauthorized response.
+
 func VerifyBasicAuth(context *gin.Context) {
 	header, err := getAuthorizationHeader(context)
 	response := utils.BuildResponse(context, nil)
@@ -22,11 +40,17 @@ func VerifyBasicAuth(context *gin.Context) {
 		response["error"] = err.Error()
 		context.Header("WWW-Authenticate", `Basic realm="Access to the site"`)
 		context.JSON(http.StatusUnauthorized, response)
-			return
+		return
 	}
 
 	// Basic auth validation
-	payloadParts := getBasicAuthParts(header)
+	payloadParts, err := getBasicAuthParts(header)
+	if err != nil {
+		response["error"] = "Failed to parse Basic auth header: " + err.Error()
+		context.Header("WWW-Authenticate", `Basic realm="Access to the site"`)
+		context.JSON(http.StatusUnauthorized, response)
+		return
+	}
 
 	if len(payloadParts) != 2 {
 		response["error"] = "Failed to parse Basic auth header"
@@ -36,9 +60,9 @@ func VerifyBasicAuth(context *gin.Context) {
 	}
 
 	userParam := context.Param("user")
-    passParam := context.Param("password")
-	
-	if payloadParts [0] != userParam || payloadParts[1] != passParam {
+	passParam := context.Param("password")
+
+	if payloadParts[0] != userParam || payloadParts[1] != passParam {
 		response["error"] = "Credentials don't match URL params"
 		context.Header("WWW-Authenticate", `Basic realm="Access to the site"`)
 		context.JSON(http.StatusUnauthorized, response)
@@ -46,16 +70,38 @@ func VerifyBasicAuth(context *gin.Context) {
 	}
 
 	response["message"] = "Authentication successful"
+	response["authenticated"] = true
+	response["user"] = userParam
 	context.JSON(http.StatusOK, response)
 }
 
-func VerifyBearerAuth(context *gin.Context) {
+func getBasicAuthParts(header string) ([]string, error) {
+	authParts := strings.SplitN(header, " ", 2)
+	if len(authParts) != 2 || authParts[0] != "Basic" {
+		return []string{}, fmt.Errorf("Invalid Basic Auth Header Format!")
+	}
 
-	header, err := getAuthorizationHeader(context)
+	payload, err := base64.StdEncoding.DecodeString(authParts[1])
 	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{
-			"error" : err.Error(),
-		})
+		return nil, fmt.Errorf("base64 decoding error: %w", err)
+	}
+
+	parts := strings.SplitN(string(payload), ":", 2)
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("authorization format is invalid:")
+	}
+	return parts, nil
+}
+
+func VerifyBearerAuth(context *gin.Context) {
+	response := utils.BuildResponse(context, nil)
+	header, err := getAuthorizationHeader(context)
+
+	if err != nil {
+		response["error"] = err.Error()
+		context.Header("WWW-Authenticate", `Basic realm="Access to the site"`)
+		context.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
@@ -63,73 +109,101 @@ func VerifyBearerAuth(context *gin.Context) {
 	parts := strings.SplitN(header, " ", 2)
 
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		context.JSON(http.StatusUnauthorized, 
-			gin.H{"error": "Authorization must be Bearer {token}"})
-        return
+		response["error"] = "Authorization must be Bearer {token}"
+		context.Header("WWW-Authenticate", `Bearer realm="Access to the protected area"`)
+		context.JSON(http.StatusUnauthorized, response)
+		return
 
 	}
 
 	token := parts[1]
-	if token != constants.EXPECTED_NONCE {
-		context.JSON(
-			http.StatusForbidden, gin.H{"error": "Invalid or expired token"})
-        return
-	}
 
-	response := utils.BuildResponse(context, nil)
+	response["token"] = token
+	response["authenticated"] = true
 	response["message"] = "Bearer authentication successful"
 	context.JSON(http.StatusOK, response)
 
 }
 
-//makes HTTP Digest Authentication
+// makes HTTP Digest Authentication
 func VerifyDigestAuth(context *gin.Context) {
 	response := utils.BuildResponse(context, nil)
 	header, err := getAuthorizationHeader(context)
+	//get path variables
+	qopParam := context.Param("qop")
+	userParam := context.Param("user")
+	passwdParam := context.Param("passwd")
+
 	if err != nil {
+		//challenge phase
+		//generate a realm
+		realm := fmt.Sprintf("%s@eliferden.com", userParam)
+
+		//generate nonce and opaque
+
 		response["error"] = err.Error()
-		context.JSON(http.StatusInternalServerError, response)
+		context.JSON(http.StatusUnauthorized, response)
 		return
 	}
 
-	// Eğer Authorization header yoksa, nonce oluştur ve istemciye gönder
-	if header == "" {
-		nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
-		if err != nil {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while generating the nonce"})
-			return
-		}
 
-		digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%s", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
-		context.Header("WWW-Authenticate", digestString)
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
-		return
-	}
 
-	// Authorization header'ını parçala ve bilgileri al
-	authInfo := parseDigestAuthHeader(header)
-	if authInfo == nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format."})
-		return
-	}
 
-	// Nonce kontrolü
-	if authInfo["nonce"] == "" || authInfo["nonce"] != constants.EXPECTED_NONCE {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid nonce value."})
-		return
-	}
 
-	// Kullanıcı adı ve şifre doğrulama
-	if authInfo["username"] != constants.EXPECTED_USERNAME || authInfo["response"] != calculateDigestHash(authInfo) {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password."})
-		return
-	}
+	// // Eğer Authorization header yoksa, nonce oluştur ve istemciye gönder
+	// if header == "" {
+	// 	nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
+	// 	if err != nil {
+	// 		context.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while generating the nonce"})
+	// 		return
+	// 	}
 
-	context.JSON(http.StatusOK, gin.H{"message": "Digest authentication successful."})
+	// 	digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%s", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
+	// 	context.Header("WWW-Authenticate", digestString)
+	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
+	// 	return
+	// }
+
+	// // Authorization header'ını parçala ve bilgileri al
+	// authInfo := parseDigestAuthHeader(header)
+	// if authInfo == nil {
+	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format."})
+	// 	return
+	// }
+
+	// // Nonce kontrolü
+	// if authInfo["nonce"] == "" || authInfo["nonce"] != constants.EXPECTED_NONCE {
+	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid nonce value."})
+	// 	return
+	// }
+
+	// // Kullanıcı adı ve şifre doğrulama
+	// if authInfo["username"] != constants.EXPECTED_USERNAME || authInfo["response"] != calculateDigestHash(authInfo) {
+	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password."})
+	// 	return
+	// }
+
+	// context.JSON(http.StatusOK, gin.H{"message": "Digest authentication successful."})
 }
 
+func parseDigestAuthHeader(header string) map[string]string {
+	if !strings.HasPrefix(header, "Digest ") {
+		return nil
+	}
+	header = strings.TrimPrefix(header, "Digest ")
 
-//verifies basic authentication but does not show prompt on the browser
+	authMap := make(map[string]string)
+	pairs := utils.SplitByCommas(header)
+
+	for _, pair := range pairs {
+		key, value := utils.ExtractKeyValue(pair)
+		authMap[key] = value
+	}
+
+	return authMap
+}
+
+// verifies basic authentication but does not show prompt on the browser
 func VerifyHiddenBasicAuth(context *gin.Context) {
 	// header, err := getAuthorizationHeader(context)
 	// if err != nil {
@@ -152,9 +226,6 @@ func VerifyHiddenBasicAuth(context *gin.Context) {
 	// 	"message": "Authentication successful.",
 	// })
 }
-
-
-
 
 func VerifyDigestAuthWithAlgortihm(context *gin.Context) {
 	header, err := getAuthorizationHeader(context)
@@ -199,53 +270,16 @@ func VerifyDigestAuthWithAlgortihm(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{"message": "Digest authentication successful."})
 }
 
+func getAuthorizationHeader(context *gin.Context) (string, error) {
+	header := context.GetHeader("Authorization")
 
-
-
-
-func getAuthorizationHeader (context *gin.Context) (string, error) {
-	//expected: Authorization: Basic <base64(username:password)>
-	header := context.Request.Header.Get("Authorization")
-
-	if  header == "" {
-		return "", errors.New("authorization header is empty. Please enter valid credentials")
+	if header == "" {
+		return "", errors.New("Authorization header is empty. Please enter valid credentials")
 
 	}
 	return header, nil
 }
 
-
-
-func getBasicAuthParts (header string) [] string  {
-	authParts := strings.SplitN(header, " ", 2)
-	if len(authParts) != 2 || authParts[0] != "Basic" {
-		return []string{}
-	}
-
-	payload, _ := base64.StdEncoding.DecodeString(authParts[1])
-	parts := strings.SplitN(string(payload), ":", 2)
-	if len(parts) != 2 {
-		return []string{}
-	}
-	return parts
-}
-
-func parseDigestAuthHeader(header string) map[string]string {
-	if !strings.HasPrefix(header, "Digest ") {
-		return nil
-	}
-	header = strings.TrimPrefix(header, "Digest ")
-
-	authMap := make(map[string]string)
-	pairs := utils.SplitByCommas(header)
-
-	for _, pair := range pairs {
-		key, value := utils.ExtractKeyValue(pair)
-		authMap[key] = value
-	}
-
-	return authMap
-}
 
 
 func calculateDigestHash(authInfo map[string]string) string {
@@ -259,4 +293,3 @@ func md5Hash(data string) string {
 	h.Write([]byte(data))
 	return hex.EncodeToString(h.Sum(nil))
 }
-
