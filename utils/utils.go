@@ -26,7 +26,9 @@ func GenerateNonce(size int) (string, error) {
 	return hex.EncodeToString(hash[:]), nil
 }
 
-func GenerateOpaque(size int)
+func GenerateOpaque(size int) {
+	
+}
 
 
 

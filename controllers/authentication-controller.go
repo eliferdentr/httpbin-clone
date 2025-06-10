@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	utils "httbinclone-eliferden.com/utils"
@@ -127,80 +128,106 @@ func VerifyBearerAuth(context *gin.Context) {
 
 // makes HTTP Digest Authentication
 func VerifyDigestAuth(context *gin.Context) {
-	response := utils.BuildResponse(context, nil)
-	header, err := getAuthorizationHeader(context)
-	//get path variables
+	// önce parametreleri al.
+	// Çünkü hem Meydan Okuma (challenge) hem de Doğrulama (verification)
+	// fazında bunlara ihtiyacımız var.
 	qopParam := context.Param("qop")
 	userParam := context.Param("user")
 	passwdParam := context.Param("passwd")
 
+	// 2. SONRA Authorization başlığını kontrol et.
+	response := utils.BuildResponse(context, nil)
+	header, err := getAuthorizationHeader(context)
+
+	realm := fmt.Sprintf("%s@eliferden.com", userParam)
+	// 3. DAHA SONRA başlığın varlığına göre karar ver.
 	if err != nil {
-		//challenge phase
-		//generate a realm
-		realm := fmt.Sprintf("%s@eliferden.com", userParam)
-
-		//generate nonce and opaque
-
+		// --- MEYDAN OKUMA FAZI (Authorization başlığı YOK) ---
+		// Şimdi userParam ve qopParam burada mevcut ve kullanılabilir!
 		response["error"] = err.Error()
+		nonce := generateSimpleNonce() // Bu yardımcı fonksiyonu eklediğini varsayıyorum.
+		wwwAuthValue := fmt.Sprintf(`Digest realm="%s", qop="%s", nonce="%s", algorithm="MD5"`,
+			realm, qopParam, nonce)
+
+		context.Header("WWW-Authenticate", wwwAuthValue)
 		context.JSON(http.StatusUnauthorized, response)
+		return // Fonksiyonu burada bitir.
+	}
+
+	// --- DOĞRULAMA FAZI (Authorization başlığı VAR) ---
+
+	authParams := parseDigestAuthHeader(header)
+	clientUsername := authParams["username"]
+	clientRealm := authParams["realm"]
+	clientNonce := authParams["nonce"]
+	clientURI := authParams["uri"]
+	clientQop := authParams["qop"]
+	clientNC := authParams["nc"]             // Nonce Count
+	clientCNonce := authParams["cnonce"]     // Client Nonce
+	clientResponse := authParams["response"] // İstemcinin hesapladığı özet
+
+	if clientRealm != realm {
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Realm mismatch"})
+		return
+	}
+	// İstemcinin gönderdiği kullanıcı adı ile URL'deki kullanıcı adı aynı olmalı.
+	if clientUsername != userParam {
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Username mismatch"})
 		return
 	}
 
+	ha1 := md5Hash(fmt.Sprintf("%s:%s:%s", userParam, clientRealm, passwdParam))
+	ha2 := md5Hash(fmt.Sprintf("%s:%s", context.Request.Method, clientURI))
+	expectedResponse := md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, clientNonce, clientNC, clientCNonce, clientQop, ha2))
 
+	if clientResponse == expectedResponse {
+		response["authenticated"] = true
+		response["user"] = userParam
 
-
-
-	// // Eğer Authorization header yoksa, nonce oluştur ve istemciye gönder
-	// if header == "" {
-	// 	nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
-	// 	if err != nil {
-	// 		context.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while generating the nonce"})
-	// 		return
-	// 	}
-
-	// 	digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%s", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
-	// 	context.Header("WWW-Authenticate", digestString)
-	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
-	// 	return
-	// }
-
-	// // Authorization header'ını parçala ve bilgileri al
-	// authInfo := parseDigestAuthHeader(header)
-	// if authInfo == nil {
-	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format."})
-	// 	return
-	// }
-
-	// // Nonce kontrolü
-	// if authInfo["nonce"] == "" || authInfo["nonce"] != constants.EXPECTED_NONCE {
-	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid nonce value."})
-	// 	return
-	// }
-
-	// // Kullanıcı adı ve şifre doğrulama
-	// if authInfo["username"] != constants.EXPECTED_USERNAME || authInfo["response"] != calculateDigestHash(authInfo) {
-	// 	context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password."})
-	// 	return
-	// }
-
-	// context.JSON(http.StatusOK, gin.H{"message": "Digest authentication successful."})
+	} else {
+		fmt.Printf("DEBUG: Client Response: %s\n", clientResponse)
+		fmt.Printf("DEBUG: Server Expected: %s\n", expectedResponse)
+		response["authenticated"] = false
+		response["error"] = "Invalid digest response"
+	}
+	context.JSON(http.StatusOK, response)
 }
 
+func generateSimpleNonce() string {
+	// Şimdilik zaman damgasını nonce olarak kullanalım.
+	// Bu güvenli değil ama mantığı anlamak için yeterli.
+	return fmt.Sprintf("%x", time.Now().UnixNano())
+}
+
+func caculateMD5(text string) string {
+	hash := md5.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
+}
+
+// Authorization: Digest username="...", realm="...", ...
 func parseDigestAuthHeader(header string) map[string]string {
+	//header must start with Digest
 	if !strings.HasPrefix(header, "Digest ") {
 		return nil
 	}
-	header = strings.TrimPrefix(header, "Digest ")
+	//delete Digest part
+	trimmed := strings.TrimPrefix(header, "Digest ")
 
-	authMap := make(map[string]string)
-	pairs := utils.SplitByCommas(header)
+	params := make(map[string]string)
+	//virgülle ayrılmış kısımlara böl
+	parts := strings.Split(trimmed, ",")
 
-	for _, pair := range pairs {
-		key, value := utils.ExtractKeyValue(pair)
-		authMap[key] = value
+	for _, part := range parts {
+		// Her kısmı "=" ile anahtar ve değere ayır
+		keyValue := strings.SplitN(strings.TrimSpace(part), "=", 2)
+		if len(keyValue) == 2 {
+			key := keyValue[0]
+			// Değerler genellikle tırnak içinde gelir, bu tırnakları temizle
+			value := strings.Trim(keyValue[1], "\"")
+			params[key] = value
+		}
 	}
-
-	return authMap
+	return params
 }
 
 // verifies basic authentication but does not show prompt on the browser
@@ -279,8 +306,6 @@ func getAuthorizationHeader(context *gin.Context) (string, error) {
 	}
 	return header, nil
 }
-
-
 
 func calculateDigestHash(authInfo map[string]string) string {
 	ha1 := md5Hash(authInfo["username"] + ":" + constants.REALM + ":" + constants.EXPECTED_PASSWORD)
