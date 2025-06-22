@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -12,8 +13,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	utils "httbinclone-eliferden.com/utils"
-	constants "httbinclone-eliferden.com/utils/constants"
 )
+
+  var nonceMap = make(map[string]time.Time )
 
 //verifies basic authentication and returns 200 if successful
 //Prompts the user for authorization using HTTP Basic Auth.
@@ -126,45 +128,103 @@ func VerifyBearerAuth(context *gin.Context) {
 
 }
 
-// makes HTTP Digest Authentication
-func VerifyDigestAuth(context *gin.Context) {
+func VerifyDigestAuthTypes(context *gin.Context) {
 	// önce parametreleri al.
 	// Çünkü hem Meydan Okuma (challenge) hem de Doğrulama (verification)
 	// fazında bunlara ihtiyacımız var.
-	qopParam := context.Param("qop")
-	userParam := context.Param("user")
-	passwdParam := context.Param("passwd")
+    // --- 1. Parametreleri Al ---
+    qopParam := context.Param("qop")
+    userParam := context.Param("user")
+    passwdParam := context.Param("passwd")
+    algorithmParam := context.Param("algorithm")
+    staleAfterParam := context.Param("stale_after")
 
-	// 2. SONRA Authorization başlığını kontrol et.
-	response := utils.BuildResponse(context, nil)
-	header, err := getAuthorizationHeader(context)
+    response := utils.BuildResponse(context, nil)
+    header, err := getAuthorizationHeader(context)
+    realm := fmt.Sprintf("%s@eliferden.com", userParam)
 
-	realm := fmt.Sprintf("%s@eliferden.com", userParam)
-	// 3. DAHA SONRA başlığın varlığına göre karar ver.
-	if err != nil {
-		// --- MEYDAN OKUMA FAZI (Authorization başlığı YOK) ---
-		// Şimdi userParam ve qopParam burada mevcut ve kullanılabilir!
-		response["error"] = err.Error()
-		nonce := generateSimpleNonce() // Bu yardımcı fonksiyonu eklediğini varsayıyorum.
-		wwwAuthValue := fmt.Sprintf(`Digest realm="%s", qop="%s", nonce="%s", algorithm="MD5"`,
-			realm, qopParam, nonce)
+    // --- 2. Meydan Okuma mı? Doğrulama mı? ---
+    if err != nil {
+        // --- MEYDAN OKUMA FAZI (Authorization başlığı YOK) ---
+        nonce := generateSimpleNonce()
 
-		context.Header("WWW-Authenticate", wwwAuthValue)
-		context.JSON(http.StatusUnauthorized, response)
-		return // Fonksiyonu burada bitir.
-	}
+        // YENİ ADIM: Nonce'ı oluşturulma zamanıyla birlikte map'e kaydet.
+        nonceMap[nonce] = time.Now()
 
-	// --- DOĞRULAMA FAZI (Authorization başlığı VAR) ---
+        algoForChallenge := algorithmParam
+        if algoForChallenge == "" {
+            algoForChallenge = "MD5"
+        }
 
-	authParams := parseDigestAuthHeader(header)
-	clientUsername := authParams["username"]
-	clientRealm := authParams["realm"]
-	clientNonce := authParams["nonce"]
-	clientURI := authParams["uri"]
-	clientQop := authParams["qop"]
-	clientNC := authParams["nc"]             // Nonce Count
-	clientCNonce := authParams["cnonce"]     // Client Nonce
-	clientResponse := authParams["response"] // İstemcinin hesapladığı özet
+        wwwAuthValue := fmt.Sprintf(`Digest realm="%s", qop="%s", nonce="%s", algorithm="%s"`,
+            realm, qopParam, nonce, algoForChallenge)
+
+        context.Header("WWW-Authenticate", wwwAuthValue)
+        context.JSON(http.StatusUnauthorized, response)
+        return
+    }
+
+    // --- DOĞRULAMA FAZI (Authorization başlığı VAR) ---
+    authParams := parseDigestAuthHeader(header)
+    if authParams == nil {
+        // Hatalı format
+        context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Authorization header format"})
+        return
+    }
+
+    clientNonce := authParams["nonce"]
+
+    // --- YENİ ADIM: STALE KONTROLÜ ---
+    // Bu kontrol, imza hesaplamasından ÖNCE yapılmalı.
+    if staleAfterParam != "" {
+        creationTime, nonceExists := nonceMap[clientNonce]
+        if !nonceExists {
+            // İstemci, bizim üretmediğimiz veya çoktan sildiğimiz bir nonce gönderdi.
+            context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or unknown nonce"})
+            return
+        }
+
+        // URL'den gelen süreyi parse et
+        staleDuration, parseErr := time.ParseDuration(staleAfterParam)
+        if parseErr != nil {
+            context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid stale_after format", "details": parseErr.Error()})
+            return
+        }
+
+        // Nonce'ın yaşını hesapla
+        nonceAge := time.Since(creationTime)
+
+        if nonceAge > staleDuration {
+            // NONCE ESKİMİŞ (STALE)!
+            // İstemciye yeni bir nonce ve "stale=true" direktifi ile yanıt ver.
+            newNonce := generateSimpleNonce()
+            nonceMap[newNonce] = time.Now() // Yeni nonce'ı da kaydet
+
+            // Eski nonce'ı map'ten silebiliriz (isteğe bağlı)
+            delete(nonceMap, clientNonce)
+
+            algoForChallenge := algorithmParam
+            if algoForChallenge == "" { algoForChallenge = "MD5" }
+
+            staleResponseHeader := fmt.Sprintf(`Digest realm="%s", qop="%s", nonce="%s", algorithm="%s", stale=true`,
+                realm, qopParam, newNonce, algoForChallenge)
+
+            context.Header("WWW-Authenticate", staleResponseHeader)
+            context.JSON(http.StatusUnauthorized, gin.H{"authenticated": false, "stale": true})
+            return
+        }
+    }
+    // --- STALE KONTROLÜ SONA ERDİ ---
+    // Eğer kod buraya ulaştıysa, nonce tazedir ve geçerlidir.
+
+    // Buradan sonrası, daha önce yazdığın imza doğrulama mantığının aynısı...
+    clientUsername := authParams["username"]
+    clientRealm := authParams["realm"]
+    clientURI := authParams["uri"]
+    clientQop := authParams["qop"]
+    clientNC := authParams["nc"]
+    clientCNonce := authParams["cnonce"]
+    clientResponse := authParams["response"]
 
 	if clientRealm != realm {
 		context.JSON(http.StatusUnauthorized, gin.H{"error": "Realm mismatch"})
@@ -176,32 +236,48 @@ func VerifyDigestAuth(context *gin.Context) {
 		return
 	}
 
-	ha1 := md5Hash(fmt.Sprintf("%s:%s:%s", userParam, clientRealm, passwdParam))
-	ha2 := md5Hash(fmt.Sprintf("%s:%s", context.Request.Method, clientURI))
-	expectedResponse := md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, clientNonce, clientNC, clientCNonce, clientQop, ha2))
+	ha1 := ""
+	ha2 := ""
+	expectedResponse := ""
 
+	switch algorithmParam {
+	case "MD5":
+		ha1 = md5Hash(fmt.Sprintf("%s:%s:%s", userParam, clientRealm, passwdParam))
+		ha2 = md5Hash(fmt.Sprintf("%s:%s", context.Request.Method, clientURI))
+		expectedResponse = md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, clientNonce, clientNC, clientCNonce, clientQop, ha2))
+	case "SHA-256":
+		ha1 = sha256Hash(fmt.Sprintf("%s:%s:%s", userParam, clientRealm, passwdParam))
+		ha2 = sha256Hash(fmt.Sprintf("%s:%s", context.Request.Method, clientURI))
+		expectedResponse = sha256Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, clientNonce, clientNC, clientCNonce, clientQop, ha2))
+
+	case "":
+		ha1 = md5Hash(fmt.Sprintf("%s:%s:%s", userParam, clientRealm, passwdParam))
+		ha2 = md5Hash(fmt.Sprintf("%s:%s", context.Request.Method, clientURI))
+		expectedResponse = md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, clientNonce, clientNC, clientCNonce, clientQop, ha2))
+	default:
+        // Desteklenmeyen bir algoritma istendi
+		response["error"] = "Invalid digest response"
+        context.JSON(http.StatusBadRequest, response)
+        return // Fonksiyonu burada bitir.
+    }
+	
 	if clientResponse == expectedResponse {
 		response["authenticated"] = true
 		response["user"] = userParam
+		context.JSON(http.StatusOK, response)
 
 	} else {
-		fmt.Printf("DEBUG: Client Response: %s\n", clientResponse)
-		fmt.Printf("DEBUG: Server Expected: %s\n", expectedResponse)
 		response["authenticated"] = false
 		response["error"] = "Invalid digest response"
+		context.JSON(http.StatusUnauthorized, response)
 	}
-	context.JSON(http.StatusOK, response)
+
 }
 
 func generateSimpleNonce() string {
 	// Şimdilik zaman damgasını nonce olarak kullanalım.
 	// Bu güvenli değil ama mantığı anlamak için yeterli.
 	return fmt.Sprintf("%x", time.Now().UnixNano())
-}
-
-func caculateMD5(text string) string {
-	hash := md5.Sum([]byte(text))
-	return hex.EncodeToString(hash[:])
 }
 
 // Authorization: Digest username="...", realm="...", ...
@@ -254,49 +330,6 @@ func VerifyHiddenBasicAuth(context *gin.Context) {
 	// })
 }
 
-func VerifyDigestAuthWithAlgortihm(context *gin.Context) {
-	header, err := getAuthorizationHeader(context)
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Eğer Authorization header yoksa, nonce oluştur ve istemciye gönder
-	if header == "" {
-		nonce, err := utils.GenerateNonce(constants.NONCE_BYTE_LENGTH)
-		if err != nil {
-			context.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while generating the nonce"})
-			return
-		}
-
-		digestString := fmt.Sprintf(`Digest realm="Access to the site", nonce="%s", algorithm=%s`, nonce, constants.NONCE_HASHING_ALGORITHM)
-		context.Header("WWW-Authenticate", digestString)
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing."})
-		return
-	}
-
-	// Authorization header'ını parçala ve bilgileri al
-	authInfo := parseDigestAuthHeader(header)
-	if authInfo == nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format."})
-		return
-	}
-
-	// Nonce kontrolü
-	if authInfo["nonce"] == "" || authInfo["nonce"] != constants.EXPECTED_NONCE {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid nonce value."})
-		return
-	}
-
-	// Kullanıcı adı ve şifre doğrulama
-	if authInfo["username"] != constants.EXPECTED_USERNAME || authInfo["response"] != calculateDigestHash(authInfo) {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password."})
-		return
-	}
-
-	context.JSON(http.StatusOK, gin.H{"message": "Digest authentication successful."})
-}
-
 func getAuthorizationHeader(context *gin.Context) (string, error) {
 	header := context.GetHeader("Authorization")
 
@@ -307,14 +340,15 @@ func getAuthorizationHeader(context *gin.Context) (string, error) {
 	return header, nil
 }
 
-func calculateDigestHash(authInfo map[string]string) string {
-	ha1 := md5Hash(authInfo["username"] + ":" + constants.REALM + ":" + constants.EXPECTED_PASSWORD)
-	ha2 := md5Hash(authInfo["method"] + ":" + authInfo["uri"])
-	return md5Hash(ha1 + ":" + authInfo["nonce"] + ":" + ha2)
-}
-
+// farklı girdilerle aynı md5 sum üretilebiliyor. bunun için sonradan bundan vazgeçildi
 func md5Hash(data string) string {
 	h := md5.New()
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func sha256Hash(data string) string {
+	h := sha256.New()
 	h.Write([]byte(data))
 	return hex.EncodeToString(h.Sum(nil))
 }

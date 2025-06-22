@@ -8,7 +8,7 @@ import (
 func RegisterAuthenticationRoutes(router *gin.Engine) {
 	router.GET("/basic-auth/:user/:password", controllers.VerifyBasicAuth)
 	router.GET("/bearer", controllers.VerifyBearerAuth)
-	router.GET("/digest-auth/:qop/:user/:passwd",controllers.VerifyDigestAuth)
-	router.GET("/hidden-basic-auth/:user/:passwd",controllers.VerifyHiddenBasicAuth)
-	
+	router.GET("/digest-auth/:qop/:user/:passwd",controllers.VerifyDigestAuthTypes)
+	router.GET("/digest-auth/:qop/:user/:passwd/:algorithm",controllers.VerifyDigestAuthTypes)
+	router.GET("/digest-auth/:qop/:user/:passwd/:algorithm/:stale_after",controllers.VerifyDigestAuthTypes)
 }
