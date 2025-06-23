@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	services "httbinclone-eliferden.com/services/implementation"
 )
 
 //returns the list of all the endpoints
@@ -34,46 +32,4 @@ func GetUUID(context *gin.Context) {
 	})
 }
 
-//returns the USER-AGENT info of the request
-func GetUserAgent(context *gin.Context) {
-	userAgent := context.Request.Header.Get("User-Agent")
-	context.JSON(http.StatusOK, gin.H{
-		"user-agent": userAgent,
-	})
-}
 
-//returns the headers
-func GetHeaders(context *gin.Context) {
-	headers := context.Request.Header
-	if len(headers) == 0 {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": "No headers provided in the request",
-		})
-		return
-	}
-	service := services.NewRequestProcessorServiceImpl()
-	formattedHeaders := service.GetHeader(headers)
-	context.JSON(http.StatusOK, gin.H{
-		"headers": formattedHeaders,
-	})
-}
-
-//returns the client ip
-func GetIP(context *gin.Context) {
-	clientIp := context.ClientIP()
-
-	if clientIp == "" {
-		context.JSON(http.StatusNotAcceptable, gin.H{
-			"error": "Client IP could not be resolved",
-		})
-		return
-	}
-
-	context.JSON(http.StatusOK, gin.H{
-		"client_ip": clientIp,
-		"meta": gin.H{
-			"note": "This is the IP address detected by the server.",
-		},
-	})
-
-}

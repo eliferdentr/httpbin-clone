@@ -9,6 +9,8 @@ func RegisterRoutes(router *gin.Engine) {
 	RegisterHTTPRoutes(router)
 	//status
 	RegisterStatusRoutes(router)
+	//request-inspection
+	RegisterRequestInspectionRoutes(router)
 	//redirect
 	RegisterRedirectRoutes(router)
 	//cookies
@@ -19,6 +21,7 @@ func RegisterRoutes(router *gin.Engine) {
 	RegisterStreamingDelayRoutes(router)
 	//other
 	RegisterOtherRoutes(router)
+
 
 
 }

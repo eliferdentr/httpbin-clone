@@ -42,7 +42,15 @@ func PutHandler(context *gin.Context) {
 }
 
 func DeleteHandler(context *gin.Context) {
-	context.JSON(200, utils.BuildResponse(context, nil))
+	var requestBody map[string]any //key of a json object is a string and the value could be anything
+	if err := context.ShouldBindJSON(&requestBody); err != nil {
+		context.JSON(400, gin.H{
+			"error": "Invalid Request Body.",
+		})
+		return
+	}
+
+	context.JSON(200, utils.BuildResponse(context, requestBody))
 
 }
 
