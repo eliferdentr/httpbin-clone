@@ -4,12 +4,40 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
+
+func GetKeyValueMap(input map[string][]string) map[string]string {
+	args := map[string]string{}
+	for k,v := range input {
+		if len(v) > 0 {
+			args[k] = v[0]
+		}
+	}
+	return args
+}
+
+func GetJSONBody (c *gin.Context)( string, map[string]interface{}) {
+	var rawBody string
+	var jsonBody map[string]interface{}
+
+	if c.Request.Body != nil {
+		bodyBytes, _ := io.ReadAll(c.Request.Body)
+		rawBody = string(bodyBytes)
+		_ = json.Unmarshal((bodyBytes), &jsonBody)
+		// Body tekrar kullanılabilsin diye resetle
+
+		c.Request.Body = io.NopCloser(strings.NewReader(rawBody))
+	}
+	return rawBody, jsonBody
+}
+
 
 func GenerateNonce(size int) (string, error) {
 	// Generate random byte
@@ -26,39 +54,8 @@ func GenerateNonce(size int) (string, error) {
 	return hex.EncodeToString(hash[:]), nil
 }
 
-func GenerateOpaque(size int) {
-	
-}
 
 
-
-func SplitByCommas(header string) []string {
-	var result []string
-	var current string
-	inQuotes := false
-
-	for _, char := range header {
-		switch char {
-		case '"':
-			inQuotes = !inQuotes // Tırnak açıp kapatma durumunu takip et
-		case ',':
-			if !inQuotes {
-				// Eğer tırnak içinde değilsek, virgülde böl
-				result = append(result, strings.TrimSpace(current))
-				current = ""
-				continue
-			}
-		}
-		current += string(char)
-	}
-
-	// Son parçayı ekleyelim
-	if current != "" {
-		result = append(result, strings.TrimSpace(current))
-	}
-
-	return result
-}
 func ExtractKeyValue(pair string) (string, string) {
 	parts := strings.SplitN(pair, "=", 2)
 	if len(parts) != 2 {
@@ -76,14 +73,7 @@ func ExtractKeyValue(pair string) (string, string) {
 	return key, value
 }
 
-func GetPositiveIntParam(context *gin.Context, paramName string) (int, error) {
-	paramStr := context.Param(paramName) // Parametreyi al
-	param, err := strconv.Atoi(paramStr) // String to int dönüşümü
-	if err != nil || param <= 0 {
-		return 0, fmt.Errorf("invalid parameter please provide a positive integer")
-	}
-	return param, nil
-}
+
 
 func BuildResponse ( context *gin.Context, requestBody any) gin.H {
 	args := context.Request.URL.Query()
@@ -116,4 +106,13 @@ func BuildResponse ( context *gin.Context, requestBody any) gin.H {
 	}
 
 	return response
+}
+
+func GetNParam(c *gin.Context) (int, bool) { 
+	nParamStr := c.Param("n") 
+	nParam, err := strconv.Atoi(nParamStr) 
+	if err != nil || nParam <= 0 { 
+		return 0, true 
+	} 
+	return nParam, false 
 }
