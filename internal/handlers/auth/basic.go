@@ -1,10 +1,9 @@
 package auth
 
 import (
-	"encoding/base64"
 	"strings"
-
 	"github.com/gin-gonic/gin"
+	"httbinclone-eliferden.com/utils"
 )
 
 func BasicAuthHandler(c *gin.Context) {
@@ -24,7 +23,7 @@ func BasicAuthHandler(c *gin.Context) {
 	}
 
 	encodedPart := strings.TrimPrefix(authorizationHeader, "Basic ")
-	decodedAuth, err := base64Decode(encodedPart)
+	decodedAuth, err := utils.Base64Decode(encodedPart)
 	if err != nil {
 		c.JSON(401, gin.H{"error": "Invalid base64 encoding"})
 		return
@@ -42,10 +41,4 @@ func BasicAuthHandler(c *gin.Context) {
 	})
 }
 
-func base64Decode(str string) (string, error) {
-	data, err := base64.StdEncoding.DecodeString(str)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
+

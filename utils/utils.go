@@ -3,11 +3,11 @@ package utils
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -108,11 +108,11 @@ func BuildResponse ( context *gin.Context, requestBody any) gin.H {
 	return response
 }
 
-func GetNParam(c *gin.Context) (int, bool) { 
-	nParamStr := c.Param("n") 
-	nParam, err := strconv.Atoi(nParamStr) 
-	if err != nil || nParam <= 0 { 
-		return 0, true 
-	} 
-	return nParam, false 
+
+func Base64Decode(str string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
