@@ -4,28 +4,35 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
 	"github.com/gin-gonic/gin"
-	"httbinclone-eliferden.com/internal/handlers/request"
 )
 
+/*
+1. URL’den gecikme süresi alınır
+
+/delay/3 → 3 saniye bekle
+
+2. Eğer sayı değilse → 400
+3. Eğer saniye 0’dan küçükse → 400
+4. Bekleme yapılır
+*/
+
 func DelayHandler(c *gin.Context) {
-	secondsParam := c.Param("seconds")
-	seconds, err := strconv.Atoi(secondsParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest,
-			gin.H{"error": "invalid seconds parameter"})
+	gecikmeSuresiStr := c.Param("n")
+	if gecikmeSuresiStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "n param cannot be empty"})
 		return
 	}
+	gecikmeSuresi, err := strconv.Atoi(gecikmeSuresiStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if gecikmeSuresi < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "n parameter must be greater than or equal to 0"})
+		return
+	}
+	time.Sleep(time.Duration(gecikmeSuresi) * time.Second)
+	c.JSON(http.StatusOK, gin.H{"delay": gecikmeSuresi})
 
-	var sleepTime time.Duration
-	if seconds < 0 {
-		seconds = 0
-	}
-	if seconds > 10 {
-		seconds = 10
-	}
-	time.Sleep(time.Duration(seconds) * time.Second)
-	time.Sleep(sleepTime)
-	request.GetHandler(c)
 }

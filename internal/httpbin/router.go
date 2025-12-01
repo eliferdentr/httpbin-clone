@@ -27,7 +27,7 @@ func NewRouter() *gin.Engine {
 	r.GET("/redirect/:n", response.RedirectHandler)
 	r.GET("/redirect-to", response.RedirectToHandler)
 	r.GET("/absolute-redirect/:n", response.AbsoluteRedirectHandler)
-	r.GET("/delay/:seconds", response.DelayHandler)
+	r.GET("/delay/:n", response.DelayHandler)
 	r.GET("/drip", response.DripHandler)
 	r.GET("/stream/:n", response.StreamHandler)
 	r.GET("/bytes/:n", response.BytesHandler)
