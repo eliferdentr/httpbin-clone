@@ -1,28 +1,35 @@
 package request
 
 import (
+	"io"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
-	"httbinclone-eliferden.com/utils"
 )
 
 func AnythingHandler(c *gin.Context) {
-	args := utils.GetKeyValueMap(c.Request.URL.Query())
-	headers := utils.GetKeyValueMap(c.Request.Header)
-	form := utils.GetKeyValueMap(c.Request.PostForm)
+	// 1) METHOD
 	method := c.Request.Method
-	url := c.Request.URL.String()
-	origin := c.ClientIP()
 
-	rawBody, jsonBody := utils.GetJSONBody(c)
+	// 2) HEADERS
+	headers := c.Request.Header
 
-	c.JSON(200, gin.H{
-		"args":    args,
-		"data":    rawBody,   // ham body string
-		"form":    form,      // form-encoded
-		"json":    jsonBody,  // parse edildiyse JSON, yoksa nil
-		"headers": headers,
+	// 3) QUERY PARAMS
+	query := c.Request.URL.Query()
+
+	// 4) FULL URL / PATH
+	fullURL := c.Request.RequestURI
+
+	// 5) BODY
+	bodyBytes, _ := io.ReadAll(c.Request.Body)
+	body := string(bodyBytes)
+
+	// 6) JSON RESPONSE
+	c.JSON(http.StatusOK, gin.H{
 		"method":  method,
-		"origin":  origin,
-		"url":     url,
+		"headers": headers,
+		"query":   query,
+		"url":     fullURL,
+		"body":    body,
 	})
 }

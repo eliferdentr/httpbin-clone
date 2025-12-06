@@ -7,5 +7,18 @@ import (
 )
 
 func HeadersHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, c.Request.Header)
+	// 1) header'ları al
+	headers := c.Request.Header
+	// 2) JSON formatında döndür
+	// {
+	//   "headers": { ... }
+	// }
+	headersMap := map[string]interface{}{}
+	for k, v := range headers {
+		headersMap[k] = v
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"headers": headersMap,
+	})
 }
