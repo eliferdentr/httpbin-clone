@@ -6,15 +6,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetCookiesHandler(c *gin.Context) {
-	cookies := c.Request.Cookies()
-	cookiesMap := make (map[string]string)
+// GET /cookies
+// Tüm cookie’leri JSON olarak döndürür
+func CookiesHandler(c *gin.Context) {
+	// 1) request'ten cookie map oluştur
+	cookies := createCookieMap(c.Request.Cookies())
+	// 2) JSON olarak {"cookies": {...}} döndür
+	
+}
 
-	for _, cookie := range cookies{
-		cookiesMap[cookie.Name] = cookie.Value
+// GET /cookies/set/:name/:value
+// Cookie set eder → sonra redirect (/cookies)
+func SetCookieHandler(c *gin.Context) {
+	// 1) name, value parametrelerini al
+	// 2) cookie oluştur → HttpOnly=false, Path="/"
+	// 3) c.SetCookie(...)
+	// 4) redirect → 302 → /cookies
+}
+
+// GET /cookies/delete
+// Bir veya daha fazla cookie'yi siler → redirect (/cookies)
+// /cookies/delete?name=a&name=b
+func DeleteCookieHandler(c *gin.Context) {
+	// 1) c.QueryArray("name") ile cookie isimlerini al
+	// 2) her biri için:
+	//      maxAge= -1 vererek cookie sil
+	// 3) redirect → 302 → /cookies
+}
+
+func createCookieMap([]*http.Cookie) map[string]*http.Cookie {
+	cookiesMap := make(map[string]*http.Cookie)
+	for _, cookie := range cookiesMap {
+		cookiesMap[cookie.Name] = cookie
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"cookies": cookiesMap,
-	})
+	return cookiesMap
 }
