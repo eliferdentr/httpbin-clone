@@ -10,18 +10,35 @@ import (
 // Tüm cookie’leri JSON olarak döndürür
 func CookiesHandler(c *gin.Context) {
 	// 1) request'ten cookie map oluştur
-	cookies := createCookieMap(c.Request.Cookies())
+	cookies := c.Request.Cookies()
+	cookiesMap := make(map[string]string)
+	for _, cookie := range cookies {
+		cookiesMap[cookie.Name] = cookie.Value
+	}
 	// 2) JSON olarak {"cookies": {...}} döndür
-	
+	c.JSON(http.StatusOK, gin.H{
+		"cookies": cookiesMap,
+	})
+
 }
 
 // GET /cookies/set/:name/:value
 // Cookie set eder → sonra redirect (/cookies)
 func SetCookieHandler(c *gin.Context) {
 	// 1) name, value parametrelerini al
+	name := c.Param("name")
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "name is empty"})
+	}
+	value := c.Param("value")
+	if value == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "value is empty"})
+	}
 	// 2) cookie oluştur → HttpOnly=false, Path="/"
 	// 3) c.SetCookie(...)
+	c.SetCookie(name, value, 0, "/", "", false, false)
 	// 4) redirect → 302 → /cookies
+	c.Redirect(http.StatusFound, "/cookies")
 }
 
 // GET /cookies/delete
@@ -29,15 +46,15 @@ func SetCookieHandler(c *gin.Context) {
 // /cookies/delete?name=a&name=b
 func DeleteCookieHandler(c *gin.Context) {
 	// 1) c.QueryArray("name") ile cookie isimlerini al
+	cookieNames := c.QueryArray("name")
 	// 2) her biri için:
 	//      maxAge= -1 vererek cookie sil
-	// 3) redirect → 302 → /cookies
-}
-
-func createCookieMap([]*http.Cookie) map[string]*http.Cookie {
-	cookiesMap := make(map[string]*http.Cookie)
-	for _, cookie := range cookiesMap {
-		cookiesMap[cookie.Name] = cookie
+	for _, n := range cookieNames {
+		if n != "" {
+			// MaxAge = -1 → delete
+			c.SetCookie(n, "", -1, "/", "", false, false)
+		}
 	}
-	return cookiesMap
+
+	c.Redirect(http.StatusFound, "/cookies")
 }
