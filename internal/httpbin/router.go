@@ -1,69 +1,98 @@
-package httpbin
+package router
 
 import (
 	"github.com/gin-gonic/gin"
+
+	// auth
 	"httbinclone-eliferden.com/internal/handlers/auth"
-	"httbinclone-eliferden.com/internal/handlers/compression"
-	"httbinclone-eliferden.com/internal/handlers/cookies"
-	"httbinclone-eliferden.com/internal/handlers/images"
-	"httbinclone-eliferden.com/internal/handlers/misc"
-	"httbinclone-eliferden.com/internal/handlers/request"
+
+	// response
 	"httbinclone-eliferden.com/internal/handlers/response"
+
+	// request
+	"httbinclone-eliferden.com/internal/handlers/request"
+
+	// cookies
+	"httbinclone-eliferden.com/internal/handlers/cookies"
+
+	// compression
+	"httbinclone-eliferden.com/internal/handlers/compression"
+
+	// images
+	"httbinclone-eliferden.com/internal/handlers/images"
+
+	// misc
+	"httbinclone-eliferden.com/internal/handlers/misc"
 )
 
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 
-	//request
-	r.GET("/ip", request.IPHandler)
-	r.GET("/user-agent", request.UserAgentHandler)
-	r.GET("/headers", request.HeadersHandler)
-	r.GET("/get", request.GetHandler)
-	r.Any("/anything", request.AnythingHandler)
+	// =========================
+	// AUTH
+	// =========================
+	r.GET("/basic-auth/:user/:passwd", auth.BasicAuthHandler)
+	r.GET("/bearer", auth.BearerAuthHandler)
+	r.GET("/digest-auth/:qop/:user/:passwd", auth.DigestAuthHandler)
+	r.GET("/hidden-basic-auth/:user/:passwd", auth.HiddenBasicAuthHandler)
 
-
-	//response
+	// =========================
+	// RESPONSE
+	// =========================
 	r.GET("/status/:code", response.StatusHandler)
-	r.GET("/redirect/:n", response.RedirectHandler)
-	r.GET("/redirect-to", response.RedirectToHandler)
-	r.GET("/absolute-redirect/:n", response.AbsoluteRedirectHandler)
+	r.GET("/bytes/:n", response.BytesHandler)
+	r.GET("/cache/:n", response.CacheHandler)
 	r.GET("/delay/:n", response.DelayHandler)
 	r.GET("/drip", response.DripHandler)
-	r.GET("/stream/:n", response.StreamHandler)
-	r.GET("/bytes/:n", response.BytesHandler)
 	r.GET("/range/:n", response.RangeHandler)
+	r.GET("/redirect/:n", response.RedirectHandler)
+	r.GET("/relative-redirect/:n", response.RelativeRedirectHandler)
+	r.GET("/absolute-redirect/:n", response.AbsoluteRedirectHandler)
+	r.GET("/stream/:n", response.StreamHandler)
 
-	//cookies
-	r.GET("/cookies", cookies.GetCookiesHandler)
-	r.GET("/cookies/set", cookies.SetCookiesHandler)
-	r.GET("/cookies/delete", cookies.DeleteCookiesHandler)
+	// =========================
+	// REQUEST
+	// =========================
+	r.Any("/anything", request.AnythingHandler)
+	r.GET("/get", request.GetHandler)
+	r.GET("/headers", request.HeadersHandler)
+	r.GET("/ip", request.IPHandler)
+	r.Any("/methods", request.MethodsHandler)
+	r.GET("/user-agent", request.UserAgentHandler)
 
-	//auth
-	r.GET("/basic-auth/:user/:passwd", auth.BasicAuthHandler)
-	r.GET("/hidden-basic-auth/:user/:passwd", auth.HiddenBasicAuthHandler)
-	r.GET("/digest-auth/:qop/:user/:passwd", auth.DigestAuthHandler)
-	r.GET("/bearer", auth.BearerHandler)
+	// =========================
+	// COOKIES
+	// =========================
+	r.GET("/cookies", cookies.CookiesHandler)
+	r.GET("/cookies/set/:name/:value", cookies.SetCookieHandler)
+	r.GET("/cookies/delete", cookies.DeleteCookieHandler)
 
-	// compression
+	// =========================
+	// COMPRESSION
+	// =========================
 	r.GET("/gzip", compression.GzipHandler)
-	r.GET("/deflate", compression.DeflateHandler)
 	r.GET("/brotli", compression.BrotliHandler)
+	r.GET("/deflate", compression.DeflateHandler)
 
-	// images
+	// =========================
+	// IMAGES
+	// =========================
+	r.GET("/image/jpeg", images.JpegHandler)
 	r.GET("/image/png", images.PNGHandler)
-	r.GET("/image/jpeg", images.JPEGHandler)
 	r.GET("/image/svg", images.SVGHandler)
 	r.GET("/image/webp", images.WEBPHandler)
 
-	//misc
+	// =========================
+	// MISC
+	// =========================
+	r.GET("/deny", misc.DenyHandler)
+	r.POST("/forms/post", misc.FormsPostHandler)
 	r.GET("/html", misc.HTMLHandler)
 	r.GET("/json", misc.JSONHandler)
-	r.GET("/xml", misc.XMLHandler)
-	r.GET("/robots.txt", misc.RobotsHandler)
-	r.GET("/deny", misc.DenyHandler)
 	r.GET("/links/:n", misc.LinksHandler)
-	r.POST("/forms/post", misc.FormsHandler)
+	r.GET("/robots.txt", misc.RobotsHandler)
 	r.GET("/uuid", misc.UUIDHandler)
+	r.GET("/xml", misc.XMLHandler)
 
 	return r
 }

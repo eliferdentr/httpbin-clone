@@ -18,12 +18,8 @@ func TestFormsPostHandler_URLEncoded(t *testing.T) {
 	r := gin.Default()
 	r.POST("/forms/post", FormsPostHandler)
 
-	body := "name=kitten&age=5"
-	req := httptest.NewRequest(
-		"POST",
-		"/forms/post",
-		strings.NewReader(body),
-	)
+	body := strings.NewReader("name=kitten&age=3")
+	req := httptest.NewRequest("POST", "/forms/post", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	rec := httptest.NewRecorder()
@@ -34,17 +30,19 @@ func TestFormsPostHandler_URLEncoded(t *testing.T) {
 	}
 
 	var resp map[string]interface{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("invalid json: %v", err)
-	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 
 	form := resp["form"].(map[string]interface{})
+	files := resp["files"].(map[string]interface{})
 
-	if form["name"].([]interface{})[0] != "kitten" {
+	if form["name"] != "kitten" {
 		t.Fatalf("expected name=kitten")
 	}
-	if form["age"].([]interface{})[0] != "5" {
-		t.Fatalf("expected age=5")
+	if form["age"] != "3" {
+		t.Fatalf("expected age=3")
+	}
+	if len(files) != 0 {
+		t.Fatalf("expected no files")
 	}
 }
 
@@ -57,12 +55,10 @@ func TestFormsPostHandler_Multipart(t *testing.T) {
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 
-	// form field
 	_ = writer.WriteField("username", "kitten")
 
-	// fake file
-	fileWriter, _ := writer.CreateFormFile("file", "test.txt")
-	fileWriter.Write([]byte("hello"))
+	part, _ := writer.CreateFormFile("file", "test.txt")
+	part.Write([]byte("hello"))
 
 	writer.Close()
 
@@ -77,38 +73,38 @@ func TestFormsPostHandler_Multipart(t *testing.T) {
 	}
 
 	var resp map[string]interface{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("invalid json: %v", err)
-	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 
+	form := resp["form"].(map[string]interface{})
 	files := resp["files"].(map[string]interface{})
 
-	if files["file"] != "test.txt" {
-		t.Fatalf("expected file test.txt, got %v", files["file"])
+	if form["username"] != "kitten" {
+		t.Fatalf("expected username=kitten")
 	}
-	
-	if len(files) == 0 {
-		t.Fatalf("expected files")
+
+	if files["file"] != "test.txt" {
+		t.Fatalf("expected file=test.txt")
 	}
 }
 
-func TestFormsPostHandler_UnsupportedContentType(t *testing.T) {
+func TestFormsPostHandler_Empty(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	r := gin.Default()
 	r.POST("/forms/post", FormsPostHandler)
 
-	req := httptest.NewRequest(
-		"POST",
-		"/forms/post",
-		strings.NewReader(`{"x":1}`),
-	)
-	req.Header.Set("Content-Type", "application/json")
-
+	req := httptest.NewRequest("POST", "/forms/post", nil)
 	rec := httptest.NewRecorder()
+
 	r.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", rec.Code)
+	var resp map[string]interface{}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+
+	form := resp["form"].(map[string]interface{})
+	files := resp["files"].(map[string]interface{})
+
+	if len(form) != 0 || len(files) != 0 {
+		t.Fatalf("expected empty form and files")
 	}
 }
