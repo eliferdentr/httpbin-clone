@@ -78,26 +78,45 @@ My main goals of creating this project are:
 
 ---
 
-## Running the Project
+## Running the Project (Without Docker)
+## Requirements
 
-### Requirements
-- Go 1.21 or newer
+- Go 1.23+
 
-### Run locally
-go run ./cmd/api
+## Run locally
+`go run ./cmd`
 
-Default port: 8080
-### TO change the port:
-PORT=9000 go run ./cmd/api
+- Default port: 8080
+
+To change the port:
+
+`PORT=9000 go run ./cmd/api`
+
+## Running with Docker (Recommended)
+## Requirements
+
+- Docker Desktop
+
+## Build the Docker image
+`docker build -t httpbin-clone .`
+
+## Run the container
+`docker run -p 8080:8080 httpbin-clone`
+
+The service will be available at:
+
+http://localhost:8080
 
 ---
 
 ### Running Tests
-To run all tests:
+All handlers are covered with tests. Run all tests with:
 
-go test ./...
+`go test ./...`
 
-Project Structure
+## Project Structure
+
+```text
 cmd/
  └── api/
      └── main.go
@@ -113,8 +132,12 @@ internal/
       ├── images/
       ├── cookies/
       └── misc/
-
+```
 ---
+## Architecture Overview
+
+![Architecture Diagram](assets/architecture.png)
+
 
 ### Purpose
 
@@ -122,6 +145,7 @@ I made this project to learn HTTP fundamentals and improve my Go language skills
 
 ### Notes
 
-This project is intended for educational purposes.
-Code prioritizes readability and correct HTTP semantics (did my best).
-All handlers are covered with tests where applicable.
+- This project is intended for educational purposes.
+- Code prioritizes readability and correct HTTP semantics (did my best).
+- All handlers are covered with tests where applicable.
+- Inspired by https://httpbin.org
