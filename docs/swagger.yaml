@@ -1,0 +1,41 @@
+basePath: /
+info:
+  contact: {}
+  description: httpbin.org clone implemented with Go + Gin by Elif ERDEN.
+  title: HTTPBin Clone
+  version: "1.0"
+paths:
+  /basic-auth/{user}/{passwd}:
+    get:
+      description: Basic Auth with username and password
+      parameters:
+      - description: Username
+        in: path
+        name: user
+        required: true
+        type: string
+      - description: Password
+        in: path
+        name: passwd
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Basic Authentication
+      tags:
+      - auth
+schemes:
+- http
+swagger: "2.0"

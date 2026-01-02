@@ -1,9 +1,21 @@
 package auth
 
-
 import (
 	"github.com/gin-gonic/gin"
 )
+
+// DigestAuthHandler godoc
+//
+// @Summary      Digest Authentication
+// @Description  Digest authentication endpoint
+// @Tags         auth
+// @Produce      json
+// @Param        qop     path string true "Quality of Protection"
+// @Param        user    path string true "Username"
+// @Param        passwd path string true "Password"
+// @Success      200 {object} map[string]interface{}
+// @Failure      401 {object} map[string]string
+// @Router       /digest-auth/{qop}/{user}/{passwd} [get]
 
 /*
 Basic Auth gibi “user:pass” göndermez. Onun yerine tarayıcıyla sunucu bir challenge–response oyunu oynar.
@@ -42,20 +54,19 @@ Uyuşmazsa:
 
 */
 
-
 func DigestAuthHandler(c *gin.Context) {
- 	userParam := c.Param("user")
-    authHeader := c.GetHeader("Authorization")
-// 401 + WWW-Authenticate header
-    if authHeader == "" {
+	userParam := c.Param("user")
+	authHeader := c.GetHeader("Authorization")
+	// 401 + WWW-Authenticate header
+	if authHeader == "" {
 		c.Header("WWW-Authenticate", `Digest realm="test", nonce="abcdef", algorithm="MD5", qop="auth"`)
 		c.JSON(401, gin.H{"error": "Unauthorized"})
 		return
-    }
+	}
 
-    // Eğer header varsa direkt başarı kabul et (şimdilik)
-    c.JSON(200, gin.H{
-        "authenticated": true,
-        "user": userParam,
-    })
+	// Eğer header varsa direkt başarı kabul et (şimdilik)
+	c.JSON(200, gin.H{
+		"authenticated": true,
+		"user":          userParam,
+	})
 }

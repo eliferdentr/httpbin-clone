@@ -1,10 +1,21 @@
 package auth
 
 import (
-	"github.com/gin-gonic/gin"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
+// BearerAuthHandler godoc
+//
+// @Summary      Bearer Authentication
+// @Description  Authenticate using Bearer token
+// @Tags         auth
+// @Produce      json
+// @Param        Authorization header string true "Bearer token"
+// @Success      200 {object} map[string]interface{}
+// @Failure      401 {object} map[string]string
+// @Router       /bearer [get]
 
 func BearerAuthHandler(c *gin.Context) {
 	//Header var mı? → yoksa 401

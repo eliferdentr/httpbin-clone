@@ -23,10 +23,18 @@ import (
 
 	// misc
 	"httbinclone-eliferden.com/internal/handlers/misc"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "httbinclone-eliferden.com/docs" // <-- module path senin go.mod’daki module adı olmalı
 )
 
 func NewRouter() *gin.Engine {
 	r := gin.Default()
+
+	//==========================
+	// swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// =========================
 	// AUTH

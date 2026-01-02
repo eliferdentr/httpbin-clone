@@ -10,6 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GzipHandler godoc
+//
+// @Summary      Gzip compressed response
+// @Description  Returns a JSON response, gzipped if client supports it (Accept-Encoding: gzip)
+// @Tags         compression
+// @Produce      application/json
+// @Param        Accept-Encoding header string false "gzip"
+// @Success      200 {object} map[string]interface{}
+// @Failure      500 {object} map[stri
+
 /*
 GzipHandler
   - Accept-Encoding header içinde "gzip" varsa → gzip sıkıştırılmış body döner

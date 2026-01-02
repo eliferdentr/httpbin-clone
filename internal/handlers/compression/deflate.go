@@ -10,6 +10,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// DeflateHandler godoc
+//
+// @Summary      Deflate compressed response
+// @Description  Returns a JSON response, deflate-compressed if client supports it (Accept-Encoding: deflate)
+// @Tags         compression
+// @Produce      application/json
+// @Param        Accept-Encoding header string false "deflate"
+// @Success      200 {object} map[string]interface{}
+// @Failure      500 {object} map[string]string
+// @Router       /deflate [get]
+
 /*
 DeflateHandler
 

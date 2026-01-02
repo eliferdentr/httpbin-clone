@@ -7,6 +7,18 @@ import (
 	"httbinclone-eliferden.com/utils"
 )
 
+// HiddenBasicAuthHandler godoc
+//
+// @Summary      Hidden Basic Authentication
+// @Description  Same as basic auth but endpoint is hidden
+// @Tags         auth
+// @Produce      json
+// @Param        user   path  string  true  "Username"
+// @Param        passwd path  string  true  "Password"
+// @Success      200 {object} map[string]interface{}
+// @Failure      404 {object} map[string]string
+// @Router       /hidden-basic-auth/{user}/{passwd} [get]
+
 func HiddenBasicAuthHandler(c *gin.Context) {
 	/*
 		Aslında Basic Auth ile birebir aynı mantıkta çalışır.

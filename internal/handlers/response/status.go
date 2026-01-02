@@ -3,9 +3,23 @@ package response
 import (
 	"net/http"
 	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
-/* 
+
+// StatusHandler returns the given HTTP status code.
+//
+// @Summary Return a status code
+// @Description Returns the given status code with empty body (except teapot).
+// @Tags response
+// @Param code path int true "HTTP status code" minimum(100) maximum(599)
+// @Success 204 {string} string "No Content"
+// @Success 200 {string} string "OK"
+// @Success 418 {string} string "I'm a teapot"
+// @Failure 400 {object} map[string]string
+// @Router /status/{code} [get]
+
+/*
 1. URL parametresi = döndürülecek HTTP status code
 
 Örn:
@@ -17,7 +31,7 @@ import (
 Yani:
 Status 204 → body tamamen boş
 Status 200 → body yine boş
-Her durum için sadece raw status code döner. 
+Her durum için sadece raw status code döner.
 
 3. Geçersiz kod → yine o kod ile döner
 
@@ -30,7 +44,7 @@ c.Status(code) kullanarak hızlıca çözebilirsin.
 
 func StatusHandler(c *gin.Context) {
 	codeStr := c.Param("code")
-	code ,err := strconv.Atoi(codeStr)
+	code, err := strconv.Atoi(codeStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

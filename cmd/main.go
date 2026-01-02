@@ -1,5 +1,11 @@
 package main
 
+// @title HTTPBin Clone
+// @version 1.0
+// @description httpbin.org clone implemented with Go + Gin by Elif ERDEN.
+// @BasePath /
+// @schemes http
+
 import (
 	"log"
 	"os"
