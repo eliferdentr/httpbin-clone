@@ -79,11 +79,11 @@ My main goals of creating this project are:
 ---
 
 ## Running the Project (Without Docker)
-## Requirements
+### Requirements
 
 - Go 1.23+
 
-## Run locally
+### Run locally
 `go run ./cmd`
 
 - Default port: 8080
@@ -92,15 +92,17 @@ To change the port:
 
 `PORT=9000 go run ./cmd/api`
 
+---
+
 ## Running with Docker (Recommended)
-## Requirements
+### Requirements
 
 - Docker Desktop
 
-## Build the Docker image
+### Build the Docker image
 `docker build -t httpbin-clone .`
 
-## Run the container
+### Run the container
 `docker run -p 8080:8080 httpbin-clone`
 
 The service will be available at:
@@ -109,7 +111,7 @@ http://localhost:8080
 
 ---
 
-### Running Tests
+## Running Tests
 All handlers are covered with tests. Run all tests with:
 
 `go test ./...`
@@ -136,12 +138,35 @@ internal/
 
 ![Architecture Diagram](assets/architecture.png)
 
+---
+## API Documentation (Swagger)
 
-### Purpose
+This project includes Swagger (OpenAPI 2.0) documentation generated using swaggo.
+
+Swagger provides an interactive UI where you can:
+
+- Browse all available endpoints
+
+- See request parameters and response schemas
+
+- Test endpoints directly from the browser
+
+- Swagger UI
+
+After running the application, open the following URL in your browser:
+
+http://localhost:8080/swagger/index.html
+
+(If you changed the port, replace 8080 with your custom port.)
+
+--- 
+## Purpose
 
 I made this project to learn HTTP fundamentals and improve my Go language skills.
 
-### Notes
+---
+
+## Notes
 
 - This project is intended for educational purposes.
 - Code prioritizes readability and correct HTTP semantics (did my best).
