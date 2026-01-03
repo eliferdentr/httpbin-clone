@@ -35,6 +35,15 @@ Location: http://example.com/absolute-redirect/4
 HttpBin bunu request.Host üzerinden oluşturur.
 */
 
+// RedirectHandler godoc
+//
+// @Summary      Redirect N times
+// @Description Performs N redirects ending at /get
+// @Tags         response
+// @Param        n path int true "Redirect count"
+// @Success      302
+// @Failure      400 {object} map[string]string
+// @Router       /redirect/{n} [get]
 func RedirectHandler(c *gin.Context) {
 	// n alınır
 	nStr := c.Param("n")
@@ -60,6 +69,15 @@ func RedirectHandler(c *gin.Context) {
 	}
 }
 
+// RelativeRedirectHandler godoc
+//
+// @Summary      Relative redirect
+// @Description Performs relative redirects
+// @Tags         response
+// @Param        n path int true "Redirect count"
+// @Success      302
+// @Failure      400 {object} map[string]string
+// @Router       /relative-redirect/{n} [get]
 func RelativeRedirectHandler(c *gin.Context) {
 	nStr := c.Param("n")
 	if nStr == "" {
@@ -82,6 +100,15 @@ func RelativeRedirectHandler(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/relative-redirect/"+newN)
 }
 
+// AbsoluteRedirectHandler godoc
+//
+// @Summary      Absolute redirect
+// @Description Performs absolute redirects
+// @Tags         response
+// @Param        n path int true "Redirect count"
+// @Success      302
+// @Failure      400 {object} map[string]string
+// @Router       /absolute-redirect/{n} [get]
 func AbsoluteRedirectHandler(c *gin.Context) {
 	nStr := c.Param("n")
 	if nStr == "" {

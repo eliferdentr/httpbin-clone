@@ -44,6 +44,14 @@ Not:
 - c.String(...) kullanımı EN TEMİZ YOL
 */
 
+// RobotsHandler godoc
+//
+// @Summary      Robots.txt
+// @Description Returns robots.txt content
+// @Tags         misc
+// @Produce      text/plain
+// @Success      200 {string} string "robots.txt"
+// @Router       /robots.txt [get]
 func RobotsHandler(c *gin.Context) {
 	// Content-Type: text/plain
 	c.Header("Content-Type", "text/plain")

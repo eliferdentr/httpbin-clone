@@ -33,6 +33,16 @@ HttpBin /links/:n davranışı:
 6) n negatif veya sayı değilse: 400
 */
 
+// LinksHandler godoc
+//
+// @Summary      Generate links
+// @Description Generates N HTML links
+// @Tags         misc
+// @Produce      text/html
+// @Param        n path int true "Number of links"
+// @Success      200 {string} string "HTML links"
+// @Failure      400 {object} map[string]string
+// @Router       /links/{n} [get]
 func LinksHandler(c *gin.Context) {
 	nStr := c.Param("n")
 

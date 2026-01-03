@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,6 +18,15 @@ import (
 4. Bekleme yapılır
 */
 
+// DelayHandler godoc
+//
+// @Summary      Delay response
+// @Description Delays response by N seconds
+// @Tags         response
+// @Param        n path int true "Delay in seconds"
+// @Success      200 {object} map[string]int
+// @Failure      400 {object} map[string]string
+// @Router       /delay/{n} [get]
 func DelayHandler(c *gin.Context) {
 	gecikmeSuresiStr := c.Param("n")
 	if gecikmeSuresiStr == "" {

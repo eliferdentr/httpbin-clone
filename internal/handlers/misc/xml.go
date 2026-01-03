@@ -52,6 +52,14 @@ HttpBin /xml davranışı:
    - ÖNEMSİZ
 */
 
+// XMLHandler godoc
+//
+// @Summary      Return XML document
+// @Description Returns a static XML document
+// @Tags         misc
+// @Produce      application/xml
+// @Success      200 {string} string "XML document"
+// @Router       /xml [get]
 func XMLHandler(c *gin.Context) {
 	// 1) XML string'i hazırla
 	//    - backtick (`) kullanman çok rahat olur

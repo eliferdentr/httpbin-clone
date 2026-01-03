@@ -1,10 +1,137 @@
 basePath: /
 info:
   contact: {}
-  description: httpbin.org clone implemented with Go + Gin by Elif ERDEN.
+  description: router.org clone implemented with Go + Gin by Elif ERDEN.
   title: HTTPBin Clone
   version: "1.0"
 paths:
+  /absolute-redirect/{n}:
+    get:
+      description: Performs absolute redirects
+      parameters:
+      - description: Redirect count
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Absolute redirect
+      tags:
+      - response
+  /anything:
+    delete:
+      consumes:
+      - '*/*'
+      description: Returns method, headers, query params, body and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo request details
+      tags:
+      - request
+    get:
+      consumes:
+      - '*/*'
+      description: Returns method, headers, query params, body and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo request details
+      tags:
+      - request
+    head:
+      consumes:
+      - '*/*'
+      description: Returns method, headers, query params, body and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo request details
+      tags:
+      - request
+    options:
+      consumes:
+      - '*/*'
+      description: Returns method, headers, query params, body and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo request details
+      tags:
+      - request
+    patch:
+      consumes:
+      - '*/*'
+      description: Returns method, headers, query params, body and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo request details
+      tags:
+      - request
+    post:
+      consumes:
+      - '*/*'
+      description: Returns method, headers, query params, body and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo request details
+      tags:
+      - request
+    put:
+      consumes:
+      - '*/*'
+      description: Returns method, headers, query params, body and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo request details
+      tags:
+      - request
   /basic-auth/{user}/{passwd}:
     get:
       description: Basic Auth with username and password
@@ -36,6 +163,784 @@ paths:
       summary: Basic Authentication
       tags:
       - auth
+  /bearer:
+    get:
+      description: Authenticate using Bearer token
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Bearer Authentication
+      tags:
+      - auth
+  /brotli:
+    get:
+      description: 'Returns a JSON response, brotli-compressed if client supports
+        it (Accept-Encoding: br)'
+      parameters:
+      - description: br
+        in: header
+        name: Accept-Encoding
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Brotli compressed response
+      tags:
+      - compression
+  /bytes/{n}:
+    get:
+      description: Returns N random bytes
+      parameters:
+      - description: Number of bytes
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Generate random bytes
+      tags:
+      - response
+  /cache/{n}:
+    get:
+      description: Returns response with Cache-Control header
+      parameters:
+      - description: Cache duration in seconds
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cache response
+      tags:
+      - response
+  /cookies:
+    get:
+      description: Returns all cookies sent by the client
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              additionalProperties:
+                type: string
+              type: object
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get cookies
+      tags:
+      - cookies
+  /cookies/set/{name}/{value}:
+    get:
+      description: Sets a cookie and redirects to /cookies
+      parameters:
+      - description: Cookie name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Cookie value
+        in: path
+        name: value
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Found
+          headers:
+            Location:
+              description: /cookies
+              type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Set a cookie
+      tags:
+      - cookies
+  /deflate:
+    get:
+      description: 'Returns a JSON response, deflate-compressed if client supports
+        it (Accept-Encoding: deflate)'
+      parameters:
+      - description: deflate
+        in: header
+        name: Accept-Encoding
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Deflate compressed response
+      tags:
+      - compression
+  /delay/{n}:
+    get:
+      description: Delays response by N seconds
+      parameters:
+      - description: Delay in seconds
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delay response
+      tags:
+      - response
+  /deny:
+    get:
+      description: Always returns 403 Forbidden
+      produces:
+      - application/json
+      responses:
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Always deny access
+      tags:
+      - misc
+  /digest-auth/{qop}/{user}/{passwd}:
+    get:
+      description: Digest authentication endpoint
+      parameters:
+      - description: Quality of Protection
+        in: path
+        name: qop
+        required: true
+        type: string
+      - description: Username
+        in: path
+        name: user
+        required: true
+        type: string
+      - description: Password
+        in: path
+        name: passwd
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Digest Authentication
+      tags:
+      - auth
+  /drip:
+    get:
+      description: Streams bytes slowly over given duration
+      parameters:
+      - description: Number of bytes
+        in: query
+        name: numbytes
+        required: true
+        type: integer
+      - description: Duration in seconds
+        in: query
+        name: duration
+        required: true
+        type: integer
+      - description: Initial delay in seconds
+        in: query
+        name: delay
+        required: true
+        type: integer
+      - description: HTTP status code
+        in: query
+        name: code
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Drip bytes over time
+      tags:
+      - response
+  /forms/post:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      - multipart/form-data
+      description: Accepts form-urlencoded or multipart form data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Submit form data
+      tags:
+      - misc
+  /get:
+    get:
+      description: Returns query params, headers, origin IP and URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Inspect GET request
+      tags:
+      - request
+  /gzip:
+    get:
+      description: Returns a JSON response, gzip-compressed if client supports it
+      parameters:
+      - description: gzip
+        in: header
+        name: Accept-Encoding
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Gzip compressed response
+      tags:
+      - compression
+  /headers:
+    get:
+      description: Returns all request headers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get request headers
+      tags:
+      - request
+  /hidden-basic-auth/{user}/{passwd}:
+    get:
+      description: Same as basic auth but endpoint is hidden
+      parameters:
+      - description: Username
+        in: path
+        name: user
+        required: true
+        type: string
+      - description: Password
+        in: path
+        name: passwd
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Hidden Basic Authentication
+      tags:
+      - auth
+  /html:
+    get:
+      description: Returns a simple HTML document
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML document
+          schema:
+            type: string
+      summary: Return HTML page
+      tags:
+      - misc
+  /image/jpeg:
+    get:
+      description: Returns a sample JPEG image
+      produces:
+      - image/jpeg
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get JPEG image
+      tags:
+      - images
+  /image/webp:
+    get:
+      description: Returns a sample WEBP image
+      produces:
+      - image/webp
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get WEBP image
+      tags:
+      - images
+  /ip:
+    get:
+      description: Returns origin IP address
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get client IP
+      tags:
+      - request
+  /links/{n}:
+    get:
+      description: Generates N HTML links
+      parameters:
+      - description: Number of links
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML links
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Generate links
+      tags:
+      - misc
+  /methods:
+    delete:
+      consumes:
+      - '*/*'
+      description: Returns HTTP method, headers, query and body
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo HTTP method
+      tags:
+      - request
+    get:
+      consumes:
+      - '*/*'
+      description: Returns HTTP method, headers, query and body
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo HTTP method
+      tags:
+      - request
+    head:
+      consumes:
+      - '*/*'
+      description: Returns HTTP method, headers, query and body
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo HTTP method
+      tags:
+      - request
+    options:
+      consumes:
+      - '*/*'
+      description: Returns HTTP method, headers, query and body
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo HTTP method
+      tags:
+      - request
+    patch:
+      consumes:
+      - '*/*'
+      description: Returns HTTP method, headers, query and body
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo HTTP method
+      tags:
+      - request
+    post:
+      consumes:
+      - '*/*'
+      description: Returns HTTP method, headers, query and body
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo HTTP method
+      tags:
+      - request
+    put:
+      consumes:
+      - '*/*'
+      description: Returns HTTP method, headers, query and body
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Echo HTTP method
+      tags:
+      - request
+  /range/{n}:
+    get:
+      description: Streams N bytes sequentially
+      parameters:
+      - description: Number of bytes
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      - description: Duration in seconds
+        in: query
+        name: duration
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Stream byte range
+      tags:
+      - response
+  /redirect/{n}:
+    get:
+      description: Performs N redirects ending at /get
+      parameters:
+      - description: Redirect count
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Redirect N times
+      tags:
+      - response
+  /relative-redirect/{n}:
+    get:
+      description: Performs relative redirects
+      parameters:
+      - description: Redirect count
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Relative redirect
+      tags:
+      - response
+  /robots.txt:
+    get:
+      description: Returns robots.txt content
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: robots.txt
+          schema:
+            type: string
+      summary: Robots.txt
+      tags:
+      - misc
+  /status/{code}:
+    get:
+      description: Returns the given status code with empty body (except teapot).
+      parameters:
+      - description: HTTP status code
+        in: path
+        maximum: 599
+        minimum: 100
+        name: code
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "418":
+          description: I'm a teapot
+          schema:
+            type: string
+      summary: Return a status code
+      tags:
+      - response
+  /stream/{n}:
+    get:
+      description: Streams N JSON objects line by line
+      parameters:
+      - description: Number of lines
+        in: path
+        name: "n"
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Stream JSON lines
+      tags:
+      - response
+  /user-agent:
+    get:
+      description: Returns client User-Agent string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get User-Agent
+      tags:
+      - request
+  /uuid:
+    get:
+      description: Returns a random UUID (v4)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Generate UUID
+      tags:
+      - misc
+  /xml:
+    get:
+      description: Returns a static XML document
+      produces:
+      - application/xml
+      responses:
+        "200":
+          description: XML document
+          schema:
+            type: string
+      summary: Return XML document
+      tags:
+      - misc
 schemes:
 - http
 swagger: "2.0"

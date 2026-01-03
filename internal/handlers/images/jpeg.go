@@ -7,6 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// JpegHandler godoc
+//
+// @Summary      Get JPEG image
+// @Description  Returns a sample JPEG image
+// @Tags         images
+// @Produce      image/jpeg
+// @Success      200 {file} jpeg
+// @Failure      500 {object} map[string]string
+// @Router       /image/jpeg [get]
 func JpegHandler(c *gin.Context) {
 	// 1) JPEG dosyasını oku (örn: testdata/sample.jpg)
 	//    - os.ReadFile kullan

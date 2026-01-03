@@ -20,6 +20,19 @@ Body şuna benzer (10 byte örneği):
 XXXXXXXXXX
 */
 
+// DripHandler godoc
+//
+// @Summary      Drip bytes over time
+// @Description Streams bytes slowly over given duration
+// @Tags         response
+// @Param        numbytes query int true "Number of bytes"
+// @Param        duration query int true "Duration in seconds"
+// @Param        delay query int true "Initial delay in seconds"
+// @Param        code query int false "HTTP status code"
+// @Produce      application/octet-stream
+// @Success      200 {string} binary
+// @Failure      400 {object} map[string]string
+// @Router       /drip [get]
 func DripHandler(c *gin.Context) {
 	// 1) query parametrelerini al:
 	// numbytes
@@ -63,10 +76,10 @@ func DripHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-			if code < 100 || code > 599 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "status code must be between 100 and 599"})
-		return
-	}
+		if code < 100 || code > 599 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "status code must be between 100 and 599"})
+			return
+		}
 	}
 
 	// 3) initial delay: time.Sleep(delay)

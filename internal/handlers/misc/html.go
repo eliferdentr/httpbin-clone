@@ -23,6 +23,15 @@ HttpBin /html davranışı:
 5) Status: 200 OK
 6) Her zaman aynı HTML döner
 */
+
+// HTMLHandler godoc
+//
+// @Summary      Return HTML page
+// @Description Returns a simple HTML document
+// @Tags         misc
+// @Produce      text/html
+// @Success      200 {string} string "HTML document"
+// @Router       /html [get]
 func HTMLHandler(c *gin.Context) {
 
 	// 1) Content-Type ayarla

@@ -10,16 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// BrotliHandler godoc
-//
-// @Summary      Brotli compressed response
-// @Description  Returns a JSON response, brotli-compressed if client supports it (Accept-Encoding: br)
-// @Tags         compression
-// @Produce      application/json
-// @Param        Accept-Encoding header string false "br"
-// @Success      200 {object} map[string]interface{}
-// @Failure      500 {object} map[string]string
-// @Router       /brotli [get]
 /*
 BrotliHandler
 
@@ -41,6 +31,16 @@ Brotli aktifse:
 - Body brotli writer ile yazılır
 */
 
+// BrotliHandler godoc
+//
+// @Summary      Brotli compressed response
+// @Description  Returns a JSON response, brotli-compressed if client supports it (Accept-Encoding: br)
+// @Tags         compression
+// @Produce      application/json
+// @Param        Accept-Encoding header string false "br"
+// @Success      200 {object} map[string]interface{}
+// @Failure      500 {object} map[string]string
+// @Router       /brotli [get]
 func BrotliHandler(c *gin.Context) {
 
 	// 1) Accept-Encoding header’ını oku

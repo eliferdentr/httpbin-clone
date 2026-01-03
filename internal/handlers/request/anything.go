@@ -7,6 +7,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// AnythingHandler godoc
+//
+// @Summary      Echo request details
+// @Description Returns method, headers, query params, body and URL
+// @Tags         request
+// @Accept       */*
+// @Produce      application/json
+// @Success      200 {object} map[string]interface{}
+// @Router       /anything [get]
+// @Router       /anything [post]
+// @Router       /anything [put]
+// @Router       /anything [patch]
+// @Router       /anything [delete]
+// @Router       /anything [options]
+// @Router       /anything [head]
 func AnythingHandler(c *gin.Context) {
 	// 1) METHOD
 	method := c.Request.Method

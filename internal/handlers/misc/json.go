@@ -44,6 +44,14 @@ HttpBin /json davranışı:
 7) Compression yok
 */
 
+// JSONHandler godoc
+//
+// @Summary      Return sample JSON
+// @Description Returns a static JSON document
+// @Tags         misc
+// @Produce      application/json
+// @Success      200 {object} Response
+// @Router       /json [get]
 type Response struct {
 	AuthorName    string `json:"author_name"`
 	AuthorSurname string `json:"author_surname"`

@@ -25,6 +25,16 @@ Response:
 - Status her zaman 200
 */
 
+// FormsPostHandler godoc
+//
+// @Summary      Submit form data
+// @Description Accepts form-urlencoded or multipart form data
+// @Tags         misc
+// @Accept       application/x-www-form-urlencoded
+// @Accept       multipart/form-data
+// @Produce      application/json
+// @Success      200 {object} map[string]interface{}
+// @Router       /forms/post [post]
 func FormsPostHandler(c *gin.Context) {
 	form := map[string]string{}
 	files := map[string]string{}

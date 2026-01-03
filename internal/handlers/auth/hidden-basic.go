@@ -18,7 +18,6 @@ import (
 // @Success      200 {object} map[string]interface{}
 // @Failure      404 {object} map[string]string
 // @Router       /hidden-basic-auth/{user}/{passwd} [get]
-
 func HiddenBasicAuthHandler(c *gin.Context) {
 	/*
 		Aslında Basic Auth ile birebir aynı mantıkta çalışır.

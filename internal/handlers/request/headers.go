@@ -6,6 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// HeadersHandler godoc
+//
+// @Summary      Get request headers
+// @Description Returns all request headers
+// @Tags         request
+// @Produce      application/json
+// @Success      200 {object} map[string]interface{}
+// @Router       /headers [get]
 func HeadersHandler(c *gin.Context) {
 	// 1) header'ları al
 	headers := c.Request.Header

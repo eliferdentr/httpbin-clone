@@ -35,6 +35,18 @@ Content-Type: application/octet-stream
 
 5. n < 0 veya sayı değil → 400
 */
+
+// RangeHandler godoc
+//
+// @Summary      Stream byte range
+// @Description Streams N bytes sequentially
+// @Tags         response
+// @Param        n path int true "Number of bytes"
+// @Param        duration query int false "Duration in seconds"
+// @Produce      application/octet-stream
+// @Success      200 {string} binary
+// @Failure      400 {object} map[string]string
+// @Router       /range/{n} [get]
 func RangeHandler(c *gin.Context) {
 	nStr := c.Param("n")
 	if nStr == "" {
@@ -84,4 +96,3 @@ func RangeHandler(c *gin.Context) {
 		time.Sleep(interval)
 	}
 }
-

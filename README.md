@@ -118,9 +118,7 @@ All handlers are covered with tests. Run all tests with:
 
 ```text
 cmd/
- └── api/
-     └── main.go
-
+ └──  main.go
 internal/
  ├── router/
  │    └── router.go

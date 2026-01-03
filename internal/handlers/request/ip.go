@@ -7,7 +7,7 @@ import (
 )
 
 /*
-IP Handler (httpbin /ip)
+IP Handler (router /ip)
 
 Döndürmesi gereken JSON:
 
@@ -19,6 +19,14 @@ C.ClientIP() kullan.
 Proxy header'ları otomatik işler.
 */
 
+// IPHandler godoc
+//
+// @Summary      Get client IP
+// @Description Returns origin IP address
+// @Tags         request
+// @Produce      application/json
+// @Success      200 {object} map[string]string
+// @Router       /ip [get]
 func IPHandler(c *gin.Context) {
 	// 1) client ip al
 	// ip := c.ClientIP()

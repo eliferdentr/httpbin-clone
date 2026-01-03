@@ -37,6 +37,14 @@ HttpBin /uuid davranışı:
    - ÖNEMSİZ
 */
 
+// UUIDHandler godoc
+//
+// @Summary      Generate UUID
+// @Description Returns a random UUID (v4)
+// @Tags         misc
+// @Produce      application/json
+// @Success      200 {object} map[string]string
+// @Router       /uuid [get]
 func UUIDHandler(c *gin.Context) {
 	// 1) Yeni UUID üret
 	//    - uuid.New()

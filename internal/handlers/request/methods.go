@@ -14,6 +14,21 @@ MethodsHandler
 - Query param varsa query
 */
 
+// MethodsHandler godoc
+//
+// @Summary      Echo HTTP method
+// @Description Returns HTTP method, headers, query and body
+// @Tags         request
+// @Accept       */*
+// @Produce      application/json
+// @Success      200 {object} map[string]interface{}
+// @Router       /methods [get]
+// @Router       /methods [post]
+// @Router       /methods [put]
+// @Router       /methods [patch]
+// @Router       /methods [delete]
+// @Router       /methods [options]
+// @Router       /methods [head]
 func MethodsHandler(c *gin.Context) {
 	method := c.Request.Method
 

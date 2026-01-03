@@ -22,7 +22,16 @@ HttpBin:
 
 */
 
-func CacheHandler (c *gin.Context) {
+// CacheHandler godoc
+//
+// @Summary      Cache response
+// @Description Returns response with Cache-Control header
+// @Tags         response
+// @Param        n path int true "Cache duration in seconds"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]string
+// @Router       /cache/{n} [get]
+func CacheHandler(c *gin.Context) {
 	nStr := c.Param("n")
 	n, err := strconv.Atoi(nStr)
 	if err != nil || n < 0 {
@@ -32,5 +41,5 @@ func CacheHandler (c *gin.Context) {
 	maxControlValue := "public, max-age=" + nStr
 	c.Header("Cache-Control", maxControlValue)
 	c.JSON(http.StatusOK, gin.H{})
-	
+
 }

@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o httpbin-clone ./cmd/
+RUN go build -o router-clone ./cmd/
 
 EXPOSE 8080
 
@@ -16,5 +16,5 @@ CMD ["./httpbin-clone"]
 ## Go yüklü küçük bir Linux ortamı açıyor
 ## Projeni içine kopyalıyor
 ## go build ile binary üretiyor
-## ./httpbin-clone çalıştırıyor
+## ./router-clone çalıştırıyor
 ## 8080 portunu dışarı açacağını söylüyor

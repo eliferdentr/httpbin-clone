@@ -7,7 +7,6 @@ import (
 )
 
 // BearerAuthHandler godoc
-//
 // @Summary      Bearer Authentication
 // @Description  Authenticate using Bearer token
 // @Tags         auth
@@ -16,7 +15,6 @@ import (
 // @Success      200 {object} map[string]interface{}
 // @Failure      401 {object} map[string]string
 // @Router       /bearer [get]
-
 func BearerAuthHandler(c *gin.Context) {
 	//Header var mı? → yoksa 401
 	authorizationHeader := c.GetHeader("Authorization")

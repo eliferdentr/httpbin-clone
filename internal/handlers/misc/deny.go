@@ -29,6 +29,14 @@ HttpBin /deny davranışı:
 6) Redirect yok
 */
 
+// DenyHandler godoc
+//
+// @Summary      Always deny access
+// @Description Always returns 403 Forbidden
+// @Tags         misc
+// @Produce      application/json
+// @Success      403 {object} map[string]string
+// @Router       /deny [get]
 func DenyHandler(c *gin.Context) {
 	// 1) Status code'u 403 olarak ayarla
 	// 2) JSON body yaz

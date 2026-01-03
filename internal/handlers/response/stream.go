@@ -29,6 +29,16 @@ Content-Type: application/json
 5) Her chunk yazıldıktan sonra Flush() çağrılır.
 */
 
+// StreamHandler godoc
+//
+// @Summary      Stream JSON lines
+// @Description Streams N JSON objects line by line
+// @Tags         response
+// @Param        n path int true "Number of lines"
+// @Produce      application/json
+// @Success      200 {string} string
+// @Failure      400 {object} map[string]string
+// @Router       /stream/{n} [get]
 func StreamHandler(c *gin.Context) {
 	// 1) n param al → parse et → negatifse 400
 	nStr := c.Param("n")
